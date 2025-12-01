@@ -1,4 +1,5 @@
-// ====== BASIS CONFIG ======
+// ====== CHAINBREAKERS RUNNER – SIMPELE DINO-STYLE ======
+
 const config = {
   type: Phaser.AUTO,
   width: 900,
@@ -18,6 +19,7 @@ const config = {
   }
 };
 
+let game;
 let player;
 let ground;
 let cursors;
@@ -25,47 +27,68 @@ let spaceKey;
 let obstacles;
 let score = 0;
 let scoreText;
-let scoreTimer = 0; // nieuw: timer voor score
+let scoreTimer = 0;
 let gameOver = false;
-
 
 window.addEventListener("load", () => {
   game = new Phaser.Game(config);
 });
 
 function preload() {
-  // Eenvoudige blokjes i.p.v. echte sprites (later vervangen door art)
-  this.textures.generate("playerBlock", {
-    data: ["2222", "2222", "2222", "2222"],
-    pixelWidth: 16
+  // Simpele "dino" via pixel data
+  this.textures.generate("playerDino", {
+    data: [
+      ".33.....",
+      "3333....",
+      ".3333...",
+      ".3333...",
+      ".333333.",
+      ".33.33..",
+      ".33.33..",
+      "..3..3.."
+    ],
+    pixelWidth: 6
   });
 
+  // Obstakel-blok
   this.textures.generate("obstacleBlock", {
-    data: ["3333", "3333", "3333", "3333"],
-    pixelWidth: 16
+    data: [
+      "4444",
+      "4444",
+      "4444",
+      "4444"
+    ],
+    pixelWidth: 10
   });
 }
 
 function create() {
   const { width, height } = this.scale;
 
-  // Grond
-  ground = this.add.rectangle(width / 2, height - 30, width, 40, 0x1f2933);
+  // ===== Grond =====
+  const groundHeight = 40;
+  ground = this.add.rectangle(
+    width / 2,
+    height - groundHeight / 2,
+    width,
+    groundHeight,
+    0x111827
+  );
   this.physics.add.existing(ground, true); // static body
 
-  // Speler
+  // ===== Speler (dino) =====
   player = this.physics.add
-    .sprite(120, height - 120, "playerBlock")
-    .setScale(2)
-    .setCollideWorldBounds(true);
+    .sprite(140, height - groundHeight - 40, "playerDino")
+    .setScale(2);
 
-  player.setBounce(0.1);
+  player.setCollideWorldBounds(true);
+  player.setBounce(0.0);
 
-  // Obstakel-groep
-  obstacles = this.physics.add.group();
-
-  // Collision speler ↔ grond + obstakels
+  // Collider met de grond
   this.physics.add.collider(player, ground);
+
+  // ===== Obstakels =====
+  obstacles = this.physics.add.group();
   this.physics.add.collider(player, obstacles, hitObstacle, null, this);
 
   // Input
@@ -74,7 +97,7 @@ function create() {
     Phaser.Input.Keyboard.KeyCodes.SPACE
   );
 
-  // Jump ook op muisklik/tap
+  // Springen via muis/tap
   this.input.on("pointerdown", () => {
     jump();
   });
@@ -87,9 +110,9 @@ function create() {
     color: "#e5e7eb"
   });
 
-  // Om de X tijd een obstakel spawnen
+  // Obstakels spawnen om de ~1.7s
   this.time.addEvent({
-    delay: 1400,
+    delay: 1700,
     loop: true,
     callback: () => {
       if (gameOver) return;
@@ -101,7 +124,7 @@ function create() {
 function update(time, delta) {
   if (gameOver) return;
 
-  // Springen met spatie of ↑
+  // Springen met spatie of pijl omhoog
   if (
     (Phaser.Input.Keyboard.JustDown(spaceKey) ||
       Phaser.Input.Keyboard.JustDown(cursors.up)) &&
@@ -110,15 +133,21 @@ function update(time, delta) {
     jump();
   }
 
-  // Score elke ~250 ms +1
+  // Score elke ~250ms +1
   scoreTimer += delta;
   if (scoreTimer >= 250) {
     score += 1;
     scoreText.setText("Score: " + score);
     scoreTimer = 0;
   }
-}
 
+  // Obstakels opruimen die uit beeld zijn
+  obstacles.getChildren().forEach((o) => {
+    if (o.x < -50) {
+      o.destroy();
+    }
+  });
+}
 
 // ====== HELPER FUNCTIES ======
 
@@ -132,20 +161,18 @@ function jump() {
 function spawnObstacle(scene) {
   const { width, height } = scene.scale;
 
-  const size = Phaser.Math.Between(30, 60);
+  const groundHeight = 40;
+  const obstacleHeight = Phaser.Math.Between(30, 60);
+
   const obstacle = scene.physics.add
-    .sprite(width + size, height - 80, "obstacleBlock")
-    .setScale(size / 16);
+    .sprite(width + 40, height - groundHeight - obstacleHeight / 2, "obstacleBlock")
+    .setScale(obstacleHeight / 40);
 
   obstacle.setVelocityX(-260);
   obstacle.setImmovable(true);
   obstacle.body.allowGravity = false;
 
   obstacles.add(obstacle);
-
-  // Verwijder obstacle als hij uit beeld is
-  obstacle.checkWorldBounds = true;
-  obstacle.outOfBoundsKill = true;
 }
 
 function hitObstacle(playerObj, obstacle) {
@@ -155,7 +182,7 @@ function hitObstacle(playerObj, obstacle) {
   playerObj.setTint(0xff4b4b);
   playerObj.setVelocityX(0);
 
-  // Alles stoppen
+  // Obstakels stoppen
   obstacles.getChildren().forEach((o) => {
     o.setVelocityX(0);
   });
