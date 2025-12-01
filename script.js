@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS RUNNER – DINO + ÉÉN OBSTAKEL ======
+// ====== CHAINBREAKERS RUNNER – PLAYER.PNG + 1 OBSTAKEL ======
 
 const config = {
   type: Phaser.AUTO,
@@ -35,31 +35,8 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Simpele "dino" via pixel data
-  this.textures.generate("playerDino", {
-    data: [
-      ".33.....",
-      "3333....",
-      ".3333...",
-      ".3333...",
-      ".333333.",
-      ".33.33..",
-      ".33.33..",
-      "..3..3.."
-    ],
-    pixelWidth: 6
-  });
-
-  // Obstakel-blok (fel rood)
-  this.textures.generate("obstacleBlock", {
-    data: [
-      "4444",
-      "4444",
-      "4444",
-      "4444"
-    ],
-    pixelWidth: 10
-  });
+  // Laad jouw character (staat in root van repo)
+  this.load.image("playerSprite", "player.png");
 }
 
 function create() {
@@ -80,26 +57,35 @@ function create() {
   );
   this.physics.add.existing(ground, true); // static body
 
-  // ===== Speler (dino) =====
-  player = this.physics.add
-    .sprite(140, height - groundHeight - 40, "playerDino")
-    .setScale(2);
+  // ===== Speler =====
+  player = this.physics.add.sprite(
+    140,
+    height - groundHeight - 60,
+    "playerSprite"
+  );
+
+  // Schaal speler kleiner als ze te groot is
+  // (eventueel later aanpassen, bv. 0.2 of 0.3)
+  player.setScale(0.25);
 
   player.clearTint();
   player.setCollideWorldBounds(true);
   player.setBounce(0);
-
   this.physics.add.collider(player, ground);
 
-  // ===== ÉÉN obstakel =====
-  const obstacleHeight = 50;
-  obstacle = this.physics.add
-    .sprite(width + 60, height - groundHeight - obstacleHeight / 2, "obstacleBlock")
-    .setScale(obstacleHeight / 40);
-
-  obstacle.setVelocityX(-260);
-  obstacle.setImmovable(true);
+  // ===== Obstakel =====
+  const obstacleHeight = 60;
+  obstacle = this.add.rectangle(
+    width + 60,
+    height - groundHeight - obstacleHeight / 2,
+    30,
+    obstacleHeight,
+    0xff3333
+  );
+  this.physics.add.existing(obstacle);
+  obstacle.body.setImmovable(true);
   obstacle.body.allowGravity = false;
+  obstacle.body.setVelocityX(-260);
 
   // Collider speler ↔ obstakel
   this.physics.add.collider(player, obstacle, hitObstacle, null, this);
@@ -122,13 +108,15 @@ function create() {
     color: "#e5e7eb"
   });
 
-  // Kleine helper tekst rechtsonder
-  this.add.text(width - 20, height - 20, "Spring: spatie / klik", {
-    fontFamily:
-      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    fontSize: "14px",
-    color: "#9ca3af"
-  }).setOrigin(1, 1);
+  // Helpertekst rechtsonder
+  this.add
+    .text(width - 20, height - 20, "Spring: spatie / klik", {
+      fontFamily:
+        "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontSize: "14px",
+      color: "#9ca3af"
+    })
+    .setOrigin(1, 1);
 }
 
 function update(time, delta) {
@@ -143,7 +131,7 @@ function update(time, delta) {
     jump();
   }
 
-  // Score elke ~250ms +1
+  // Score elke ~250 ms +1
   scoreTimer += delta;
   if (scoreTimer >= 250) {
     score += 1;
@@ -157,7 +145,7 @@ function update(time, delta) {
   }
 }
 
-// ====== HELPER FUNCTIES ======
+// ===== HELPER FUNCTIES =====
 
 function jump() {
   if (!player || !player.body) return;
@@ -169,11 +157,17 @@ function jump() {
 function resetObstacle(scene) {
   const { width, height } = scene.scale;
   const groundHeight = 40;
-  const obstacleHeight = Phaser.Math.Between(40, 70);
+  const obstacleHeight = Phaser.Math.Between(40, 80);
 
-  obstacle.setPosition(width + Phaser.Math.Between(40, 200), height - groundHeight - obstacleHeight / 2);
-  obstacle.setScale(obstacleHeight / 40);
-  obstacle.setVelocityX(-260);
+  obstacle.x = width + Phaser.Math.Between(80, 220);
+  obstacle.y = height - groundHeight - obstacleHeight / 2;
+  obstacle.width = 30;
+  obstacle.height = obstacleHeight;
+
+  obstacle.body.reset(obstacle.x, obstacle.y);
+  obstacle.body.setVelocityX(-260);
+  obstacle.body.allowGravity = false;
+  obstacle.body.setImmovable(true);
 }
 
 function hitObstacle(playerObj, obstacleObj) {
@@ -182,7 +176,7 @@ function hitObstacle(playerObj, obstacleObj) {
 
   playerObj.setTint(0xff4b4b);
   playerObj.setVelocityX(0);
-  obstacleObj.setVelocityX(0);
+  obstacleObj.body.setVelocityX(0);
 
   const scene = playerObj.scene;
   const { width, height } = scene.scale;
