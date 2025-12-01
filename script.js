@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS RUNNER – PLAYER.PNG + MEERDERE OBSTAKELS ======
+// ====== CHAINBREAKERS RUNNER – PRINSES + OBSTAKELS ======
 
 const config = {
   type: Phaser.AUTO,
@@ -35,19 +35,8 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Jouw character (player.png in de root van de repo)
+  // Laad jouw prinses (player.png staat in de root van de repo)
   this.load.image("playerSprite", "player.png");
-
-  // Simpele obstakel-tekstuur (rood blok)
-  this.textures.generate("obstacleBlock", {
-    data: [
-      "4444",
-      "4444",
-      "4444",
-      "4444"
-    ],
-    pixelWidth: 10
-  });
 }
 
 function create() {
@@ -68,20 +57,30 @@ function create() {
   );
   this.physics.add.existing(ground, true); // static body
 
-  // ===== Speler (jouw vrouw sprite) =====
+  // ===== Speler (prinses) =====
   player = this.physics.add.sprite(
     140,
     height - groundHeight - 60,
     "playerSprite"
   );
 
-  // Schaal eventueel aanpassen als ze te groot/klein is
+  // Pas schaal aan als ze te groot/klein is
   player.setScale(0.25);
 
   player.clearTint();
   player.setCollideWorldBounds(true);
   player.setBounce(0);
   this.physics.add.collider(player, ground);
+
+  // Kleine “ren-animatie” (op en neer bouncen)
+  this.tweens.add({
+    targets: player,
+    duration: 260,
+    y: player.y - 6,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.inOut"
+  });
 
   // ===== Obstakels-groep =====
   obstacles = this.physics.add.group();
@@ -105,7 +104,7 @@ function create() {
     color: "#e5e7eb"
   });
 
-  // Helper tekst
+  // Helper tekst rechtsonder
   this.add
     .text(width - 20, height - 20, "Spring: spatie / klik", {
       fontFamily:
@@ -168,16 +167,18 @@ function spawnObstacle(scene) {
   const groundHeight = 40;
   const obstacleHeight = Phaser.Math.Between(30, 70);
 
-  const obstacle = scene.physics.add
-    .sprite(
-      width + 40,
-      height - groundHeight - obstacleHeight / 2,
-      "obstacleBlock"
-    )
-    .setScale(obstacleHeight / 40);
+  // Rood rechthoekig obstakel
+  const obstacle = scene.add.rectangle(
+    width + 40,
+    height - groundHeight - obstacleHeight / 2,
+    30,
+    obstacleHeight,
+    0xff4040
+  );
 
-  obstacle.setVelocityX(-260);
-  obstacle.setImmovable(true);
+  scene.physics.add.existing(obstacle);
+  obstacle.body.setVelocityX(-260);
+  obstacle.body.setImmovable(true);
   obstacle.body.allowGravity = false;
 
   obstacles.add(obstacle);
@@ -189,13 +190,15 @@ function hitObstacle(playerObj, obstacleObj) {
 
   playerObj.setTint(0xff4b4b);
   playerObj.setVelocityX(0);
-
-  obstacles.getChildren().forEach((o) => {
-    o.setVelocityX(0);
-  });
+  obstacleObj.body.setVelocityX(0);
 
   const scene = playerObj.scene;
   const { width, height } = scene.scale;
+
+  // Stop alle obstakels
+  obstacles.getChildren().forEach((o) => {
+    if (o.body) o.body.setVelocityX(0);
+  });
 
   scene.add
     .text(width / 2, height / 2, "GAME OVER", {
@@ -215,3 +218,4 @@ function hitObstacle(playerObj, obstacleObj) {
     })
     .setOrigin(0.5);
 }
+
