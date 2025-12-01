@@ -18,7 +18,6 @@ const config = {
   }
 };
 
-let game;
 let player;
 let ground;
 let cursors;
@@ -26,7 +25,9 @@ let spaceKey;
 let obstacles;
 let score = 0;
 let scoreText;
+let scoreTimer = 0; // nieuw: timer voor score
 let gameOver = false;
+
 
 window.addEventListener("load", () => {
   game = new Phaser.Game(config);
@@ -97,7 +98,7 @@ function create() {
   });
 }
 
-function update() {
+function update(time, delta) {
   if (gameOver) return;
 
   // Springen met spatie of ↑
@@ -109,10 +110,15 @@ function update() {
     jump();
   }
 
-  // Score langzaam laten oplopen
-  score += 1;
-  scoreText.setText("Score: " + score);
+  // Score elke ~250 ms +1
+  scoreTimer += delta;
+  if (scoreTimer >= 250) {
+    score += 1;
+    scoreText.setText("Score: " + score);
+    scoreTimer = 0;
+  }
 }
+
 
 // ====== HELPER FUNCTIES ======
 
