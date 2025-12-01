@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS RUNNER – SIMPELE DINO-STYLE ======
+// ====== CHAINBREAKERS RUNNER – DINO + ÉÉN OBSTAKEL ======
 
 const config = {
   type: Phaser.AUTO,
@@ -24,7 +24,7 @@ let player;
 let ground;
 let cursors;
 let spaceKey;
-let obstacles;
+let obstacle;
 let score = 0;
 let scoreText;
 let scoreTimer = 0;
@@ -50,7 +50,7 @@ function preload() {
     pixelWidth: 6
   });
 
-  // Obstakel-blok
+  // Obstakel-blok (fel rood)
   this.textures.generate("obstacleBlock", {
     data: [
       "4444",
@@ -64,6 +64,10 @@ function preload() {
 
 function create() {
   const { width, height } = this.scale;
+
+  gameOver = false;
+  score = 0;
+  scoreTimer = 0;
 
   // ===== Grond =====
   const groundHeight = 40;
@@ -81,15 +85,24 @@ function create() {
     .sprite(140, height - groundHeight - 40, "playerDino")
     .setScale(2);
 
+  player.clearTint();
   player.setCollideWorldBounds(true);
-  player.setBounce(0.0);
+  player.setBounce(0);
 
-  // Collider met de grond
   this.physics.add.collider(player, ground);
 
-  // ===== Obstakels =====
-  obstacles = this.physics.add.group();
-  this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+  // ===== ÉÉN obstakel =====
+  const obstacleHeight = 50;
+  obstacle = this.physics.add
+    .sprite(width + 60, height - groundHeight - obstacleHeight / 2, "obstacleBlock")
+    .setScale(obstacleHeight / 40);
+
+  obstacle.setVelocityX(-260);
+  obstacle.setImmovable(true);
+  obstacle.body.allowGravity = false;
+
+  // Collider speler ↔ obstakel
+  this.physics.add.collider(player, obstacle, hitObstacle, null, this);
 
   // Input
   cursors = this.input.keyboard.createCursorKeys();
@@ -97,7 +110,6 @@ function create() {
     Phaser.Input.Keyboard.KeyCodes.SPACE
   );
 
-  // Springen via muis/tap
   this.input.on("pointerdown", () => {
     jump();
   });
@@ -110,15 +122,13 @@ function create() {
     color: "#e5e7eb"
   });
 
-  // Obstakels spawnen om de ~1.7s
-  this.time.addEvent({
-    delay: 1700,
-    loop: true,
-    callback: () => {
-      if (gameOver) return;
-      spawnObstacle(this);
-    }
-  });
+  // Kleine helper tekst rechtsonder
+  this.add.text(width - 20, height - 20, "Spring: spatie / klik", {
+    fontFamily:
+      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontSize: "14px",
+    color: "#9ca3af"
+  }).setOrigin(1, 1);
 }
 
 function update(time, delta) {
@@ -141,12 +151,10 @@ function update(time, delta) {
     scoreTimer = 0;
   }
 
-  // Obstakels opruimen die uit beeld zijn
-  obstacles.getChildren().forEach((o) => {
-    if (o.x < -50) {
-      o.destroy();
-    }
-  });
+  // Obstakel resetten als hij uit beeld is
+  if (obstacle.x < -50) {
+    resetObstacle(this);
+  }
 }
 
 // ====== HELPER FUNCTIES ======
@@ -158,34 +166,23 @@ function jump() {
   }
 }
 
-function spawnObstacle(scene) {
+function resetObstacle(scene) {
   const { width, height } = scene.scale;
-
   const groundHeight = 40;
-  const obstacleHeight = Phaser.Math.Between(30, 60);
+  const obstacleHeight = Phaser.Math.Between(40, 70);
 
-  const obstacle = scene.physics.add
-    .sprite(width + 40, height - groundHeight - obstacleHeight / 2, "obstacleBlock")
-    .setScale(obstacleHeight / 40);
-
+  obstacle.setPosition(width + Phaser.Math.Between(40, 200), height - groundHeight - obstacleHeight / 2);
+  obstacle.setScale(obstacleHeight / 40);
   obstacle.setVelocityX(-260);
-  obstacle.setImmovable(true);
-  obstacle.body.allowGravity = false;
-
-  obstacles.add(obstacle);
 }
 
-function hitObstacle(playerObj, obstacle) {
+function hitObstacle(playerObj, obstacleObj) {
   if (gameOver) return;
   gameOver = true;
 
   playerObj.setTint(0xff4b4b);
   playerObj.setVelocityX(0);
-
-  // Obstakels stoppen
-  obstacles.getChildren().forEach((o) => {
-    o.setVelocityX(0);
-  });
+  obstacleObj.setVelocityX(0);
 
   const scene = playerObj.scene;
   const { width, height } = scene.scale;
