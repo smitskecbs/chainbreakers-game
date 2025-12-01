@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS RUNNER – PLAYER.PNG + 1 OBSTAKEL ======
+// ====== CHAINBREAKERS RUNNER – PLAYER.PNG + MEERDERE OBSTAKELS ======
 
 const config = {
   type: Phaser.AUTO,
@@ -24,7 +24,7 @@ let player;
 let ground;
 let cursors;
 let spaceKey;
-let obstacle;
+let obstacles;
 let score = 0;
 let scoreText;
 let scoreTimer = 0;
@@ -35,8 +35,19 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Laad jouw character (staat in root van repo)
+  // Jouw character (player.png in de root van de repo)
   this.load.image("playerSprite", "player.png");
+
+  // Simpele obstakel-tekstuur (rood blok)
+  this.textures.generate("obstacleBlock", {
+    data: [
+      "4444",
+      "4444",
+      "4444",
+      "4444"
+    ],
+    pixelWidth: 10
+  });
 }
 
 function create() {
@@ -57,15 +68,14 @@ function create() {
   );
   this.physics.add.existing(ground, true); // static body
 
-  // ===== Speler =====
+  // ===== Speler (jouw vrouw sprite) =====
   player = this.physics.add.sprite(
     140,
     height - groundHeight - 60,
     "playerSprite"
   );
 
-  // Schaal speler kleiner als ze te groot is
-  // (eventueel later aanpassen, bv. 0.2 of 0.3)
+  // Schaal eventueel aanpassen als ze te groot/klein is
   player.setScale(0.25);
 
   player.clearTint();
@@ -73,22 +83,9 @@ function create() {
   player.setBounce(0);
   this.physics.add.collider(player, ground);
 
-  // ===== Obstakel =====
-  const obstacleHeight = 60;
-  obstacle = this.add.rectangle(
-    width + 60,
-    height - groundHeight - obstacleHeight / 2,
-    30,
-    obstacleHeight,
-    0xff3333
-  );
-  this.physics.add.existing(obstacle);
-  obstacle.body.setImmovable(true);
-  obstacle.body.allowGravity = false;
-  obstacle.body.setVelocityX(-260);
-
-  // Collider speler ↔ obstakel
-  this.physics.add.collider(player, obstacle, hitObstacle, null, this);
+  // ===== Obstakels-groep =====
+  obstacles = this.physics.add.group();
+  this.physics.add.collider(player, obstacles, hitObstacle, null, this);
 
   // Input
   cursors = this.input.keyboard.createCursorKeys();
@@ -108,7 +105,7 @@ function create() {
     color: "#e5e7eb"
   });
 
-  // Helpertekst rechtsonder
+  // Helper tekst
   this.add
     .text(width - 20, height - 20, "Spring: spatie / klik", {
       fontFamily:
@@ -117,6 +114,16 @@ function create() {
       color: "#9ca3af"
     })
     .setOrigin(1, 1);
+
+  // Om de X tijd een obstakel spawnen
+  this.time.addEvent({
+    delay: 1800,
+    loop: true,
+    callback: () => {
+      if (gameOver) return;
+      spawnObstacle(this);
+    }
+  });
 }
 
 function update(time, delta) {
@@ -139,10 +146,12 @@ function update(time, delta) {
     scoreTimer = 0;
   }
 
-  // Obstakel resetten als hij uit beeld is
-  if (obstacle.x < -50) {
-    resetObstacle(this);
-  }
+  // Obstakels opruimen die uit beeld zijn
+  obstacles.getChildren().forEach((o) => {
+    if (o.x < -60) {
+      o.destroy();
+    }
+  });
 }
 
 // ===== HELPER FUNCTIES =====
@@ -154,20 +163,24 @@ function jump() {
   }
 }
 
-function resetObstacle(scene) {
+function spawnObstacle(scene) {
   const { width, height } = scene.scale;
   const groundHeight = 40;
-  const obstacleHeight = Phaser.Math.Between(40, 80);
+  const obstacleHeight = Phaser.Math.Between(30, 70);
 
-  obstacle.x = width + Phaser.Math.Between(80, 220);
-  obstacle.y = height - groundHeight - obstacleHeight / 2;
-  obstacle.width = 30;
-  obstacle.height = obstacleHeight;
+  const obstacle = scene.physics.add
+    .sprite(
+      width + 40,
+      height - groundHeight - obstacleHeight / 2,
+      "obstacleBlock"
+    )
+    .setScale(obstacleHeight / 40);
 
-  obstacle.body.reset(obstacle.x, obstacle.y);
-  obstacle.body.setVelocityX(-260);
+  obstacle.setVelocityX(-260);
+  obstacle.setImmovable(true);
   obstacle.body.allowGravity = false;
-  obstacle.body.setImmovable(true);
+
+  obstacles.add(obstacle);
 }
 
 function hitObstacle(playerObj, obstacleObj) {
@@ -176,7 +189,10 @@ function hitObstacle(playerObj, obstacleObj) {
 
   playerObj.setTint(0xff4b4b);
   playerObj.setVelocityX(0);
-  obstacleObj.body.setVelocityX(0);
+
+  obstacles.getChildren().forEach((o) => {
+    o.setVelocityX(0);
+  });
 
   const scene = playerObj.scene;
   const { width, height } = scene.scale;
