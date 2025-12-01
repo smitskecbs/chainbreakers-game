@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS RUNNER – PRINSES + OBSTAKELS ======
+// ====== CHAINBREAKERS RUNNER – RUNNER.PNG + OBSTAKEL ======
 
 const config = {
   type: Phaser.AUTO,
@@ -12,19 +12,15 @@ const config = {
       debug: false
     }
   },
-  scene: {
-    preload,
-    create,
-    update
-  }
+  scene: { preload, create, update }
 };
 
 let game;
 let player;
 let ground;
+let obstacle;
 let cursors;
 let spaceKey;
-let obstacles;
 let score = 0;
 let scoreText;
 let scoreTimer = 0;
@@ -35,8 +31,14 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Laad jouw prinses (player.png staat in de root van de repo)
-  this.load.image("playerSprite", "player.png");
+  // Jouw prinses sprite
+  this.load.image("runner", "runner.png");
+
+  // Obstakel texture (simple blok)
+  this.textures.generate("obstacleTex", {
+    data: ["11", "11", "11", "11"],
+    pixelWidth: 16
+  });
 }
 
 function create() {
@@ -46,33 +48,28 @@ function create() {
   score = 0;
   scoreTimer = 0;
 
-  // ===== Grond =====
   const groundHeight = 40;
+
+  // Grond
   ground = this.add.rectangle(
     width / 2,
     height - groundHeight / 2,
     width,
-    groundHeight,
-    0x111827
+    groundHeight
   );
-  this.physics.add.existing(ground, true); // static body
+  this.physics.add.existing(ground, true); // static
 
-  // ===== Speler (prinses) =====
+  // Speler
   player = this.physics.add.sprite(
     140,
     height - groundHeight - 60,
-    "playerSprite"
+    "runner"
   );
-
-  // Pas schaal aan als ze te groot/klein is
-  player.setScale(0.25);
-
-  player.clearTint();
+  player.setScale(0.4);
   player.setCollideWorldBounds(true);
-  player.setBounce(0);
   this.physics.add.collider(player, ground);
 
-  // Kleine “ren-animatie” (op en neer bouncen)
+  // Kleine bounce zodat ze "loopt"
   this.tweens.add({
     targets: player,
     duration: 260,
@@ -82,53 +79,45 @@ function create() {
     ease: "Sine.inOut"
   });
 
-  // ===== Obstakels-groep =====
-  obstacles = this.physics.add.group();
-  this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+  // Obstakel
+  obstacle = this.physics.add.sprite(
+    width + 40,
+    height - groundHeight - 30,
+    "obstacleTex"
+  );
+  obstacle.setScale(3, 4);
+  obstacle.setImmovable(true);
+  obstacle.body.allowGravity = false;
+  obstacle.body.setVelocityX(-260);
+
+  // Collider speler ↔ obstakel
+  this.physics.add.collider(player, obstacle, hitObstacle, null, this);
 
   // Input
   cursors = this.input.keyboard.createCursorKeys();
   spaceKey = this.input.keyboard.addKey(
     Phaser.Input.Keyboard.KeyCodes.SPACE
   );
+  this.input.on("pointerdown", () => jump());
 
-  this.input.on("pointerdown", () => {
-    jump();
-  });
-
-  // Score tekst
+  // Score
   scoreText = this.add.text(20, 20, "Score: 0", {
-    fontFamily:
-      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontSize: "20px",
     color: "#e5e7eb"
   });
 
-  // Helper tekst rechtsonder
   this.add
     .text(width - 20, height - 20, "Spring: spatie / klik", {
-      fontFamily:
-        "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontSize: "14px",
       color: "#9ca3af"
     })
     .setOrigin(1, 1);
-
-  // Om de X tijd een obstakel spawnen
-  this.time.addEvent({
-    delay: 1800,
-    loop: true,
-    callback: () => {
-      if (gameOver) return;
-      spawnObstacle(this);
-    }
-  });
 }
 
 function update(time, delta) {
   if (gameOver) return;
 
-  // Springen met spatie of pijl omhoog
+  // Springen
   if (
     (Phaser.Input.Keyboard.JustDown(spaceKey) ||
       Phaser.Input.Keyboard.JustDown(cursors.up)) &&
@@ -137,51 +126,30 @@ function update(time, delta) {
     jump();
   }
 
-  // Score elke ~250 ms +1
+  // Score langzaam laten oplopen
   scoreTimer += delta;
   if (scoreTimer >= 250) {
-    score += 1;
+    score++;
     scoreText.setText("Score: " + score);
     scoreTimer = 0;
   }
 
-  // Obstakels opruimen die uit beeld zijn
-  obstacles.getChildren().forEach((o) => {
-    if (o.x < -60) {
-      o.destroy();
-    }
-  });
-}
+  // Obstakel resetten als hij uit beeld is
+  if (obstacle.x < -50) {
+    const { width, height } = this.scale;
+    const groundHeight = 40;
 
-// ===== HELPER FUNCTIES =====
+    obstacle.x = width + Phaser.Math.Between(60, 220);
+    obstacle.y = height - groundHeight - 30;
+    obstacle.body.setVelocityX(-260);
+  }
+}
 
 function jump() {
   if (!player || !player.body) return;
   if (player.body.blocked.down) {
     player.setVelocityY(-520);
   }
-}
-
-function spawnObstacle(scene) {
-  const { width, height } = scene.scale;
-  const groundHeight = 40;
-  const obstacleHeight = Phaser.Math.Between(30, 70);
-
-  // Rood rechthoekig obstakel
-  const obstacle = scene.add.rectangle(
-    width + 40,
-    height - groundHeight - obstacleHeight / 2,
-    30,
-    obstacleHeight,
-    0xff4040
-  );
-
-  scene.physics.add.existing(obstacle);
-  obstacle.body.setVelocityX(-260);
-  obstacle.body.setImmovable(true);
-  obstacle.body.allowGravity = false;
-
-  obstacles.add(obstacle);
 }
 
 function hitObstacle(playerObj, obstacleObj) {
@@ -192,27 +160,17 @@ function hitObstacle(playerObj, obstacleObj) {
   playerObj.setVelocityX(0);
   obstacleObj.body.setVelocityX(0);
 
-  const scene = playerObj.scene;
-  const { width, height } = scene.scale;
+  const { width, height } = playerObj.scene.scale;
 
-  // Stop alle obstakels
-  obstacles.getChildren().forEach((o) => {
-    if (o.body) o.body.setVelocityX(0);
-  });
-
-  scene.add
+  playerObj.scene.add
     .text(width / 2, height / 2, "GAME OVER", {
-      fontFamily:
-        "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontSize: "36px",
       color: "#fca5a5"
     })
     .setOrigin(0.5);
 
-  scene.add
+  playerObj.scene.add
     .text(width / 2, height / 2 + 40, "Refresh om opnieuw te spelen", {
-      fontFamily:
-        "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontSize: "16px",
       color: "#9ca3af"
     })
