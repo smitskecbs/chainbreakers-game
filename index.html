@@ -1,13 +1,58 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainBreakers – CBS Game</title>
-  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>ChainBreakers – CBS Testpagina</h1>
-  <p>Als je dit in de browser ziet, werkt je GitHub game repo.</p>
+  <div class="page">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-mark">CB</span>
+        <span class="logo-text">ChainBreakers</span>
+      </div>
+      <nav class="nav">
+        <a href="#home">Home</a>
+        <a href="#game">Game</a>
+        <a href="#cbs">CBS Coin</a>
+      </nav>
+    </header>
+
+    <main class="main" id="home">
+      <section class="card">
+        <h1>ChainBreakers – CBS Runner</h1>
+        <p>
+          Hier bouwen we stap voor stap aan de eerste CBS play-to-earn game.
+          Dit is nu alleen een test-hub. De echte runner komt hier binnenkort in.
+        </p>
+
+        <button class="btn" disabled>
+          Game coming soon
+        </button>
+
+        <p class="hint">
+          Deze pagina draait nu al live via GitHub Pages:<br />
+          <span>smitskecbs.github.io/chainbreakers-game</span>
+        </p>
+      </section>
+
+      <section class="card card-secondary" id="cbs">
+        <h2>Wat is CBS Coin?</h2>
+        <p>
+          CBS Coin (Community Builds Sovereignty) is de community-coin waar
+          ChainBreakers omheen gebouwd wordt. De game wordt later gekoppeld
+          aan CBS-holders en on-chain progress.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <small>Built by Kevin Smits · CBS Coin – ChainBreakers prototype</small>
+    </footer>
+  </div>
 
   <script src="script.js"></script>
 </body>
