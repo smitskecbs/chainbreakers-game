@@ -1,10 +1,10 @@
-// ====== CHAINBREAKERS RUNNER – PRINSES + OBSTAKELS ======
+// ====== CHAINBREAKERS RUNNER – PRINSES + OBSTAKELS (4-frame spritesheet) ======
 
 const config = {
   type: Phaser.AUTO,
   width: 900,
   height: 400,
-  parent: "game-container",          // Tekent in <div id="game-container">
+  parent: "game-container",
   backgroundColor: "#020617",
   physics: {
     default: "arcade",
@@ -32,15 +32,13 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Achtergrond (uit Canva, bijv. 900x400 px, ZONDER prinses erin)
+  // Achtergrond (zelfde map als index.html)
   this.load.image("background", "background.png");
 
-  // RUNNING SPRITE-SHEET
-  // player-run.png is 1536 x 1024 met 8 prinsesjes totaal
-  // => ieder frame ongeveer 192 x 512
-  this.load.spritesheet("playerRun", "player-run.png", {
-    frameWidth: 192,   // 1536 / 8
-    frameHeight: 512   // 1024 / 2 (2 rijen)
+  // 512x512 spritesheet met 2x2 frames (4 prinsesjes)
+  this.load.spritesheet("playerRun", "run-player.png", {
+    frameWidth: 256,  // 512 / 2
+    frameHeight: 256  // 512 / 2
   });
 
   // Simpele rode blok-texture voor obstakels
@@ -73,35 +71,35 @@ function create() {
   this.physics.add.existing(groundRect, true);
   ground = groundRect;
 
-  // ===== ANIMATIE AANMAKEN =====
+  // ===== RUN-ANIMATIE AANMAKEN (4 frames) =====
   this.anims.create({
     key: "run",
     frames: this.anims.generateFrameNumbers("playerRun", {
       start: 0,
-      end: 7        // 8 frames: 0 t/m 7
+      end: 3   // 4 frames: 0,1,2,3
     }),
-    frameRate: 10,  // snelheid van rennen
+    frameRate: 10,   // snelheid van rennen
     repeat: -1
   });
 
   // ===== Speler =====
   player = this.physics.add.sprite(
-    200,                        // iets verder van de linkerrand
-    height - groundHeight,      // onderkant op de grond
+    200,                    // x-positie
+    height - groundHeight,  // onderkant op de grond
     "playerRun",
     0
   );
 
-  // origin op de onderkant zodat haar voeten op de grond staan
+  // voeten op de grond
   player.setOrigin(0.5, 1);
 
-  // Scale omlaag: 512 hoog is groot, dus wat kleiner maken
-  player.setScale(0.5);        // pas aan naar smaak (0.4–0.6)
+  // schaal aanpassen (256x256 is vrij groot)
+  player.setScale(1.2);   // maak groter/kleiner naar smaak (1.0–1.5)
   player.setCollideWorldBounds(true);
   player.setBounce(0);
   this.physics.add.collider(player, ground);
 
-  // Start de run-animatie
+  // Start run-animatie
   player.play("run");
 
   // ===== Obstakels-groep =====
@@ -141,7 +139,6 @@ function create() {
 function update(time, delta) {
   if (gameOver) return;
 
-  // Springen
   if (
     (Phaser.Input.Keyboard.JustDown(spaceKey) ||
       Phaser.Input.Keyboard.JustDown(cursors.up)) &&
@@ -202,7 +199,6 @@ function hitObstacle(playerObj, obstacleObj) {
   playerObj.setVelocityX(0);
   obstacleObj.body.setVelocityX(0);
 
-  // Animatie stoppen
   if (playerObj.anims) {
     playerObj.anims.pause();
   }
