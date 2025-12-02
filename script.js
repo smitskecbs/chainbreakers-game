@@ -4,6 +4,7 @@ const config = {
   type: Phaser.AUTO,
   width: 900,
   height: 400,
+  parent: "game-container",          // <-- teken in de div in index.html
   backgroundColor: "#020617",
   physics: {
     default: "arcade",
@@ -32,6 +33,7 @@ window.addEventListener("load", () => {
 
 function preload() {
   // Achtergrond (uit Canva, bijv. 900x400 px)
+  // LET OP: gebruik hier een achtergrond ZONDER prinses erin
   this.load.image("background", "background.png");
 
   // Jouw prinses (transparante player.png in de root)
@@ -39,12 +41,7 @@ function preload() {
 
   // Simpele rode blok-texture voor obstakels
   this.textures.generate("obstacleTex", {
-    data: [
-      "11",
-      "11",
-      "11",
-      "11"
-    ],
+    data: ["11", "11", "11", "11"],
     pixelWidth: 16
   });
 }
@@ -78,7 +75,7 @@ function create() {
     height - groundHeight - 60,
     "playerSprite"
   );
-  player.setScale(0.4);          // hier kun je haar groter/kleiner maken
+  player.setScale(0.4); // hier kun je haar groter/kleiner maken
   player.setCollideWorldBounds(true);
   player.setBounce(0);
   this.physics.add.collider(player, ground);
