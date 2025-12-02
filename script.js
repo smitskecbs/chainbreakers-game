@@ -36,10 +36,11 @@ function preload() {
   this.load.image("background", "background.png");
 
   // RUNNING SPRITE-SHEET
-  // player-run.png is 1536 x 1024 met 4 kolommen en 2 rijen (8 frames)
+  // player-run.png is 1536 x 1024 met 8 prinsesjes totaal
+  // => ieder frame ongeveer 192 x 512
   this.load.spritesheet("playerRun", "player-run.png", {
-    frameWidth: 384,  // 1536 / 4
-    frameHeight: 512  // 1024 / 2
+    frameWidth: 192,   // 1536 / 8
+    frameHeight: 512   // 1024 / 2 (2 rijen)
   });
 
   // Simpele rode blok-texture voor obstakels
@@ -77,25 +78,25 @@ function create() {
     key: "run",
     frames: this.anims.generateFrameNumbers("playerRun", {
       start: 0,
-      end: 7      // 8 frames: 0 t/m 7 (4 boven, 4 onder)
+      end: 7        // 8 frames: 0 t/m 7
     }),
-    frameRate: 10, // snelheid van rennen
-    repeat: -1     // loop voor altijd
+    frameRate: 10,  // snelheid van rennen
+    repeat: -1
   });
 
   // ===== Speler =====
   player = this.physics.add.sprite(
-    140,
-    height - groundHeight,   // onderkant op de grond
+    200,                        // iets verder van de linkerrand
+    height - groundHeight,      // onderkant op de grond
     "playerRun",
     0
   );
 
-  // origin naar de onderkant zodat haar voeten op de grond staan
+  // origin op de onderkant zodat haar voeten op de grond staan
   player.setOrigin(0.5, 1);
 
-  // Scale omlaag, want 384x512 is huge
-  player.setScale(0.5);   // pas aan naar smaak (0.4 / 0.6 etc.)
+  // Scale omlaag: 512 hoog is groot, dus wat kleiner maken
+  player.setScale(0.5);        // pas aan naar smaak (0.4–0.6)
   player.setCollideWorldBounds(true);
   player.setBounce(0);
   this.physics.add.collider(player, ground);
