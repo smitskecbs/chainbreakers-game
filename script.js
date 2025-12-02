@@ -4,7 +4,7 @@ const config = {
   type: Phaser.AUTO,
   width: 900,
   height: 400,
-  parent: "game-container",          // <-- teken in de div in index.html
+  parent: "game-container",          // Tekent in <div id="game-container">
   backgroundColor: "#020617",
   physics: {
     default: "arcade",
@@ -32,12 +32,15 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Achtergrond (uit Canva, bijv. 900x400 px)
-  // LET OP: gebruik hier een achtergrond ZONDER prinses erin
+  // Achtergrond (uit Canva, bijv. 900x400 px, ZONDER prinses erin)
   this.load.image("background", "background.png");
 
-  // Jouw prinses (transparante player.png in de root)
-  this.load.image("playerSprite", "player.png");
+  // RUNNING SPRITE-SHEET
+  // player-run.png is 1536 x 1024 met 4 kolommen en 2 rijen (8 frames)
+  this.load.spritesheet("playerRun", "player-run.png", {
+    frameWidth: 384,  // 1536 / 4
+    frameHeight: 512  // 1024 / 2
+  });
 
   // Simpele rode blok-texture voor obstakels
   this.textures.generate("obstacleTex", {
@@ -57,7 +60,7 @@ function create() {
   // ===== Achtergrond =====
   const bg = this.add.image(width / 2, height / 2, "background");
   bg.setOrigin(0.5, 0.5);
-  bg.setDisplaySize(width, height); // rekt de afbeelding netjes naar 900x400
+  bg.setDisplaySize(width, height);
 
   // ===== Grond =====
   const groundRect = this.add.rectangle(
@@ -69,26 +72,36 @@ function create() {
   this.physics.add.existing(groundRect, true);
   ground = groundRect;
 
+  // ===== ANIMATIE AANMAKEN =====
+  this.anims.create({
+    key: "run",
+    frames: this.anims.generateFrameNumbers("playerRun", {
+      start: 0,
+      end: 7      // 8 frames: 0 t/m 7 (4 boven, 4 onder)
+    }),
+    frameRate: 10, // snelheid van rennen
+    repeat: -1     // loop voor altijd
+  });
+
   // ===== Speler =====
   player = this.physics.add.sprite(
     140,
-    height - groundHeight - 60,
-    "playerSprite"
+    height - groundHeight,   // onderkant op de grond
+    "playerRun",
+    0
   );
-  player.setScale(0.4); // hier kun je haar groter/kleiner maken
+
+  // origin naar de onderkant zodat haar voeten op de grond staan
+  player.setOrigin(0.5, 1);
+
+  // Scale omlaag, want 384x512 is huge
+  player.setScale(0.5);   // pas aan naar smaak (0.4 / 0.6 etc.)
   player.setCollideWorldBounds(true);
   player.setBounce(0);
   this.physics.add.collider(player, ground);
 
-  // Kleine bounce zodat ze “loopt”
-  this.tweens.add({
-    targets: player,
-    duration: 260,
-    y: player.y - 6,
-    yoyo: true,
-    repeat: -1,
-    ease: "Sine.inOut"
-  });
+  // Start de run-animatie
+  player.play("run");
 
   // ===== Obstakels-groep =====
   obstacles = this.physics.add.group();
@@ -187,6 +200,11 @@ function hitObstacle(playerObj, obstacleObj) {
   playerObj.setTint(0xff4b4b);
   playerObj.setVelocityX(0);
   obstacleObj.body.setVelocityX(0);
+
+  // Animatie stoppen
+  if (playerObj.anims) {
+    playerObj.anims.pause();
+  }
 
   const { width, height } = playerObj.scene.scale;
 
