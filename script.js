@@ -76,16 +76,16 @@ function create() {
     key: "run",
     frames: this.anims.generateFrameNumbers("playerRun", {
       start: 0,
-      end: 3   // 4 frames: 0,1,2,3
+      end: 3   // 4 frames
     }),
-    frameRate: 10,   // snelheid van rennen
+    frameRate: 6,    // iets rustiger rennen
     repeat: -1
   });
 
   // ===== Speler =====
   player = this.physics.add.sprite(
-    200,                    // x-positie
-    height - groundHeight,  // onderkant op de grond
+    200,
+    height - groundHeight,
     "playerRun",
     0
   );
@@ -93,8 +93,12 @@ function create() {
   // voeten op de grond
   player.setOrigin(0.5, 1);
 
-  // schaal aanpassen (256x256 is vrij groot)
-  player.setScale(1.2);   // maak groter/kleiner naar smaak (1.0–1.5)
+  // HIER: bovenste rand eraf croppen (bijv. 24px)
+  // (x, y, width, height) in pixels binnen elk frame (256x256)
+  player.setCrop(0, 24, 256, 256 - 24);
+
+  // schaal aanpassen
+  player.setScale(1.2);     // pas aan naar smaak
   player.setCollideWorldBounds(true);
   player.setBounce(0);
   this.physics.add.collider(player, ground);
