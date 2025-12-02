@@ -31,6 +31,9 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
+  // Achtergrond (uit Canva, bijv. 900x400 px)
+  this.load.image("background", "background.png");
+
   // Jouw prinses (transparante player.png in de root)
   this.load.image("playerSprite", "player.png");
 
@@ -53,6 +56,11 @@ function create() {
   gameOver = false;
   score = 0;
   scoreTimer = 0;
+
+  // ===== Achtergrond =====
+  const bg = this.add.image(width / 2, height / 2, "background");
+  bg.setOrigin(0.5, 0.5);
+  bg.setDisplaySize(width, height); // rekt de afbeelding netjes naar 900x400
 
   // ===== Grond =====
   const groundRect = this.add.rectangle(
