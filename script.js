@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS – STORY INTRO MET PRINSES ======
+// ====== CHAINBREAKERS – VERHAAL MET PRINSES ======
 
 const config = {
   type: Phaser.AUTO,
@@ -20,10 +20,10 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Achtergrond (900x400). Als je die niet hebt, haal deze regel weg.
+  // Achtergrond (900x400). Heb je die niet, haal deze regel weg.
   this.load.image("background", "background.png");
 
-  // Jouw prinses – player.png
+  // Jouw prinses (vierkant, bijv. 512x512, met transparante achtergrond)
   this.load.image("playerSprite", "player.png");
 }
 
@@ -37,75 +37,90 @@ function create() {
     bg.setDisplaySize(width, height);
   }
 
-  // ===== Prinses (lager en iets naar rechts) =====
-  const floorY = height - 40;          // vlak boven de onderrand van de kaart
+  // ===== Prinses netjes links onder =====
+  const floorY = height - 30; // iets boven de onderrand
 
   const player = this.add.image(width * 0.22, floorY, "playerSprite");
-  player.setOrigin(0.5, 1);            // voeten staan op floorY
-  player.setScale(0.52);               // pas aan naar smaak
+  player.setOrigin(0.5, 1);   // onderkant van de sprite staat op floorY
+  player.setScale(0.45);      // kleiner zodat ze niet uit beeld steekt
 
-  // Zachte idle-animatie
+  // Heel lichte “adem”-animatie
   this.tweens.add({
     targets: player,
-    y: floorY - 8,                     // een beetje op en neer
-    duration: 1300,
+    y: floorY - 6,
+    duration: 1400,
     yoyo: true,
     repeat: -1,
     ease: "Sine.inOut"
   });
 
-  // ===== Story tekst =====
+  // ===== Verhaalregels =====
   storyLines = [
     "In een vergeten hoekje van de Solana-keten\nwordt een prinses wakker met een vreemd gevoel.",
     "Ze voelt dat er iets vastzit in de wereld...\nalsof onzichtbare ketens iedereen tegenhouden.",
     "Maar ergens diep vanbinnen weet ze:\nketens zijn er om gebroken te worden.",
     "Ze hoort gefluister over een munt...\nCBS Coin – Community Builds Sovereignty.",
-    "Niet gemaakt door koningen of banken,\nmaar door gewone mensen die samen bouwen.",
+    "Niet gemaakt door koningen, overheden of banken,\nmaar door gewone mensen die samen bouwen.",
     "Onze prinses besluit één ding:\nze gaat op pad om de ketens te breken.",
     "Dit is nog geen game.\nDit is het begin van het verhaal.",
-    "Druk later opnieuw op ‘Start’\nom de echte ChainBreakers-game te spelen.\n\nVoor nu: onthoud dit…\n\nJe hebt geen kroon nodig om vrij te zijn."
+    "Later komt hier de echte ChainBreakers-game.\n\nVoor nu: onthoud dit…\n\nJe hebt geen kroon nodig om vrij te zijn."
   ];
 
   currentLineIndex = 0;
 
-  storyText = this.add.text(width * 0.4, height * 0.18, "", {
+  // ===== Tekstblok rechts =====
+  storyText = this.add.text(width * 0.42, height * 0.16, "", {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontSize: "18px",
-    color: "#e5e7eb",
-    wordWrap: { width: width * 0.52 },
-    lineSpacing: 6
+    color: "#f9fafb",
+    wordWrap: { width: width * 0.5 },
+    lineSpacing: 6,
+    shadow: {
+      offsetX: 1,
+      offsetY: 1,
+      color: "#000000",
+      blur: 2,
+      fill: true
+    }
   });
   storyText.setOrigin(0, 0);
 
-  // Hint iets hoger zodat het niet wordt afgesneden
-  hintText = this.add.text(width - 24, height - 32,
+  // ===== Hint onderin (nu duidelijk zichtbaar) =====
+  hintText = this.add.text(width - 24, height - 40,
     "Klik of druk op SPATIE om verder te gaan", {
       fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontSize: "13px",
-      color: "#9ca3af"
+      color: "#e5e7eb",
+      shadow: {
+        offsetX: 1,
+        offsetY: 1,
+        color: "#000000",
+        blur: 2,
+        fill: true
+      }
     }
   );
   hintText.setOrigin(1, 1);
 
   // Eerste regel tonen
-  showCurrentLine(this);
+  showCurrentLine();
 
   // Input: spatie + klik/tap
   const spaceKey = this.input.keyboard.addKey(
     Phaser.Input.Keyboard.KeyCodes.SPACE
   );
-  this.input.on("pointerdown", () => advanceStory(this));
-  spaceKey.on("down", () => advanceStory(this));
+  this.input.on("pointerdown", advanceStory);
+  spaceKey.on("down", advanceStory);
 }
 
 // ===== HELPER FUNCTIES =====
 
-function showCurrentLine(scene) {
+function showCurrentLine() {
   const line = storyLines[currentLineIndex] || "";
   storyText.setText(line);
 }
 
-function advanceStory(scene) {
+function advanceStory() {
   currentLineIndex++;
 
   if (currentLineIndex >= storyLines.length) {
@@ -113,13 +128,13 @@ function advanceStory(scene) {
 
     storyText.setText(
       "Dit was de proloog van ChainBreakers.\n\n" +
-      "Straks gaan we haar echt laten rennen,\nobstakels ontwijken en ketens breken.\n\n" +
-      "Voor nu kun je de pagina verversen\nom het verhaal opnieuw te lezen."
+      "Straks laten we haar echt spelen\nin een simpele card- of strategy-game.\n\n" +
+      "Ververs de pagina om het verhaal\nvanaf het begin opnieuw te lezen."
     );
 
     hintText.setText("Einde verhaal – ververs de pagina om opnieuw te beginnen");
     return;
   }
 
-  showCurrentLine(scene);
+  showCurrentLine();
 }
