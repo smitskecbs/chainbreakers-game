@@ -37,12 +37,12 @@ function create() {
     bg.setDisplaySize(width, height);
   }
 
-  // ===== Prinses – nóg verder naar beneden =====
-  const floorY = height - 10; // bijna helemaal onderin
+  // ===== Prinses – nog verder naar beneden & iets kleiner =====
+  const floorY = height - 2; // bijna helemaal onderin
 
   const player = this.add.image(width * 0.22, floorY, "playerSprite");
   player.setOrigin(0.5, 1);   // onderkant van de sprite staat op floorY
-  player.setScale(0.45);      // eventueel 0.42 maken als ze nét te groot is
+  player.setScale(0.43);      // iets kleiner zodat ze net binnen het frame blijft
 
   // Heel lichte “adem”-animatie
   this.tweens.add({
@@ -85,7 +85,7 @@ function create() {
   });
   storyText.setOrigin(0, 0);
 
-  // ===== Hint onderin – nu gecentreerd =====
+  // ===== Hint onderin – gecentreerd =====
   hintText = this.add.text(width / 2, height - 20,
     "Klik of druk op SPATIE om verder te gaan", {
       fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
