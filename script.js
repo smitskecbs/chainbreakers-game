@@ -1,20 +1,3 @@
-// ====== CHAINBREAKERS – STORY MODE (DROOM + WERELD 1) ======
-
-const config = {
-  type: Phaser.AUTO,
-  width: 900,
-  height: 400,
-  parent: "game-container",
-  backgroundColor: "#020617",
-  scene: [DreamScene, WorldScene]
-};
-
-let game;
-
-window.addEventListener("load", () => {
-  game = new Phaser.Game(config);
-});
-
 // ========== SCENE 1 – DROOM TUSSEN DE WOLKEN ==========
 
 class DreamScene extends Phaser.Scene {
@@ -69,7 +52,7 @@ class DreamScene extends Phaser.Scene {
       "Voor even is ze ontsnapt\naan de zwaarte van de wereld hieronder.",
       "Geen stemmen die zeggen wat moet.\nAlleen haar eigen gevoel dat fluistert:",
       "“Hier mag ik gewoon zijn.\nZonder angst, zonder schaamte,\nzonder iemand iets te moeten bewijzen.”",
-      "Maar ergens ver weg\nbegint de wereld weer te roepen…"
+      "Maar ergens ver weg\nbegint de wereld weer te roepen…\n\n(klik of spatie om wakker te worden)"
     ];
 
     this.currentLineIndex = 0;
@@ -104,8 +87,8 @@ class DreamScene extends Phaser.Scene {
   advanceStory() {
     this.currentLineIndex++;
 
+    // als we voorbij de laatste regel zijn → naar WorldScene
     if (this.currentLineIndex >= this.storyLines.length) {
-      // Naar de volgende scene (wereld 1)
       this.scene.start("WorldScene");
       return;
     }
@@ -207,3 +190,20 @@ class WorldScene extends Phaser.Scene {
     this.storyText.setText(this.storyLines[this.currentLineIndex]);
   }
 }
+
+// ========== GAME CONFIG & STARTUP ==========
+
+const config = {
+  type: Phaser.AUTO,
+  width: 900,
+  height: 400,
+  parent: "game-container",
+  backgroundColor: "#020617",
+  scene: [DreamScene, WorldScene]
+};
+
+let game;
+
+window.addEventListener("load", () => {
+  game = new Phaser.Game(config);
+});
