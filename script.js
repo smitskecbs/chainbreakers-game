@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS – VERHAAL MET PRINSES ======
+// ====== CHAINBREAKERS – DROOMVERHAAL MET PRINSES ======
 
 const config = {
   type: Phaser.AUTO,
@@ -20,7 +20,7 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Achtergrond (900x400). Heb je die niet, haal deze regel weg.
+  // Achtergrond (900x400)
   this.load.image("background", "background.png");
 
   // Jouw prinses (player.png)
@@ -37,14 +37,14 @@ function create() {
     bg.setDisplaySize(width, height);
   }
 
-  // ===== Prinses – nog verder naar beneden & iets kleiner =====
-  const floorY = height - 2; // bijna helemaal onderin
+  // ===== Prinses – iets kleiner en lager =====
+  const floorY = height + 4;  // net onder de canvas-lijn, zodat ze visueel lager hangt
 
   const player = this.add.image(width * 0.22, floorY, "playerSprite");
   player.setOrigin(0.5, 1);   // onderkant van de sprite staat op floorY
-  player.setScale(0.43);      // iets kleiner zodat ze net binnen het frame blijft
+  player.setScale(0.40);      // kleiner dan eerst (was 0.43)
 
-  // Heel lichte “adem”-animatie
+  // Zachte “adem”-animatie
   this.tweens.add({
     targets: player,
     y: floorY - 6,
@@ -54,16 +54,16 @@ function create() {
     ease: "Sine.inOut"
   });
 
-  // ===== Verhaalregels =====
+  // ===== Nieuw droom-verhaal =====
   storyLines = [
-    "In een vergeten hoekje van de Solana-keten\nwordt een prinses wakker met een vreemd gevoel.",
-    "Ze voelt dat er iets vastzit in de wereld...\nalsof onzichtbare ketens iedereen tegenhouden.",
-    "Maar ergens diep vanbinnen weet ze:\nketens zijn er om gebroken te worden.",
-    "Ze hoort gefluister over een munt...\nCBS Coin – Community Builds Sovereignty.",
-    "Niet gemaakt door koningen of banken,\nmaar door gewone mensen die samen bouwen.",
-    "Onze prinses besluit één ding:\nze gaat op pad om de ketens te breken.",
-    "Dit is nog geen game.\nDit is het begin van het verhaal.",
-    "Later komt hier de echte ChainBreakers-game.\n\nVoor nu: onthoud dit…\n\nJe hebt geen kroon nodig om vrij te zijn."
+    "Ze is niet in een kasteel.\nNiet in een stad.\nNiet in een oorlog.",
+    "Ze is in een droom.\nHoog boven alles uit,\nzwevend tussen de wolken.",
+    "Hier is geen klok die tikt.\nGeen verplichtingen, geen regels,\nalleen stilte en zachte lucht.",
+    "Voor heel even is ze ontsnapt\naan de zwaarte van de wereld hieronder.",
+    "Geen verwachtingen.\nGeen stemmen die zeggen wat moet.\nAlleen haar eigen gevoel.",
+    "In deze droom is er vrede.\nZe hoeft niets te presteren,\nalleen te ademen en te zijn.",
+    "Misschien is dit geen vlucht,\nmaar een herinnering:\nzo vrij mág je jezelf voelen.",
+    "Als ze straks wakker wordt,\nneemt ze één ding mee terug:\n\nVrijheid begint vanbinnen."
   ];
 
   currentLineIndex = 0;
@@ -127,12 +127,11 @@ function advanceStory() {
     currentLineIndex = storyLines.length - 1;
 
     storyText.setText(
-      "Dit was de proloog van ChainBreakers.\n\n" +
-      "Straks laten we haar echt spelen\nin een simpele card- of strategy-game.\n\n" +
-      "Ververs de pagina om het verhaal\nvanaf het begin opnieuw te lezen."
+      "De droom vervaagt langzaam,\nmaar het gevoel van vrijheid blijft.\n\n" +
+      "Ververs de pagina om opnieuw\nmet haar de wolken in te gaan."
     );
 
-    hintText.setText("Einde verhaal – ververs de pagina om opnieuw te beginnen");
+    hintText.setText("Einde droom – ververs de pagina om opnieuw te beginnen");
     return;
   }
 
