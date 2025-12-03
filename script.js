@@ -1,4 +1,4 @@
-// ====== CHAINBREAKERS RUNNER – PRINSES + OBSTAKELS (4-frame spritesheet) ======
+// ====== CHAINBREAKERS – STORY INTRO MET PRINSES ======
 
 const config = {
   type: Phaser.AUTO,
@@ -6,220 +6,115 @@ const config = {
   height: 400,
   parent: "game-container",
   backgroundColor: "#020617",
-  physics: {
-    default: "arcade",
-    arcade: {
-      gravity: { y: 900 },
-      debug: false
-    }
-  },
-  scene: { preload, create, update }
+  scene: { preload, create }
 };
 
 let game;
-let player;
-let ground;
-let obstacles;
-let cursors;
-let spaceKey;
-let score = 0;
-let scoreText;
-let scoreTimer = 0;
-let gameOver = false;
+let storyLines;
+let currentLineIndex = 0;
+let storyText;
+let hintText;
 
 window.addEventListener("load", () => {
   game = new Phaser.Game(config);
 });
 
 function preload() {
-  // Achtergrond (zelfde map als index.html)
+  // Achtergrond (optioneel – 900x400 is mooi)
+  // Als je nog geen background.png hebt, haal deze regel weg.
   this.load.image("background", "background.png");
 
-  // 512x512 spritesheet met 2x2 frames (4 prinsesjes)
-  this.load.spritesheet("playerRun", "run-player.png", {
-    frameWidth: 256,  // 512 / 2
-    frameHeight: 256  // 512 / 2
-  });
-
-  // Simpele rode blok-texture voor obstakels
-  this.textures.generate("obstacleTex", {
-    data: ["11", "11", "11", "11"],
-    pixelWidth: 16
-  });
+  // Jouw prinses – player.png (zoals jij ’m hebt gemaakt)
+  this.load.image("playerSprite", "player.png");
 }
 
 function create() {
   const { width, height } = this.scale;
-  const groundHeight = 40;
-
-  gameOver = false;
-  score = 0;
-  scoreTimer = 0;
 
   // ===== Achtergrond =====
-  const bg = this.add.image(width / 2, height / 2, "background");
-  bg.setOrigin(0.5, 0.5);
-  bg.setDisplaySize(width, height);
+  if (this.textures.exists("background")) {
+    const bg = this.add.image(width / 2, height / 2, "background");
+    bg.setOrigin(0.5, 0.5);
+    bg.setDisplaySize(width, height);
+  }
 
-  // ===== Grond =====
-  const groundRect = this.add.rectangle(
-    width / 2,
-    height - groundHeight / 2,
-    width,
-    groundHeight
-  );
-  this.physics.add.existing(groundRect, true);
-  ground = groundRect;
-
-  // ===== RUN-ANIMATIE AANMAKEN (4 frames) =====
-  this.anims.create({
-    key: "run",
-    frames: this.anims.generateFrameNumbers("playerRun", {
-      start: 0,
-      end: 3   // 4 frames
-    }),
-    frameRate: 6,    // iets rustiger rennen
-    repeat: -1
-  });
-
-  // ===== Speler =====
-  player = this.physics.add.sprite(
-    200,
-    height - groundHeight,
-    "playerRun",
-    0
-  );
-
-  // voeten op de grond
+  // ===== Prinses =====
+  const player = this.add.image(width * 0.22, height * 0.7, "playerSprite");
   player.setOrigin(0.5, 1);
+  player.setScale(0.55); // pas aan naar smaak
 
-  // HIER: bovenste rand eraf croppen (bijv. 24px)
-  // (x, y, width, height) in pixels binnen elk frame (256x256)
-  player.setCrop(0, 24, 256, 256 - 24);
-
-  // schaal aanpassen
-  player.setScale(1.2);     // pas aan naar smaak
-  player.setCollideWorldBounds(true);
-  player.setBounce(0);
-  this.physics.add.collider(player, ground);
-
-  // Start run-animatie
-  player.play("run");
-
-  // ===== Obstakels-groep =====
-  obstacles = this.physics.add.group();
-  this.physics.add.collider(player, obstacles, hitObstacle, null, this);
-
-  // Input
-  cursors = this.input.keyboard.createCursorKeys();
-  spaceKey = this.input.keyboard.addKey(
-    Phaser.Input.Keyboard.KeyCodes.SPACE
-  );
-  this.input.on("pointerdown", () => jump());
-
-  // Score
-  scoreText = this.add.text(20, 20, "Score: 0", {
-    fontSize: "20px",
-    color: "#e5e7eb"
+  // Kleine idle-animatie (heel zacht op en neer)
+  this.tweens.add({
+    targets: player,
+    y: player.y - 6,
+    duration: 1200,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.inOut"
   });
 
-  this.add
-    .text(width - 20, height - 20, "Spring: spatie / klik", {
-      fontSize: "14px",
-      color: "#9ca3af"
-    })
-    .setOrigin(1, 1);
+  // ===== Story tekst =====
+  storyLines = [
+    "In een vergeten hoekje van de Solana-keten\nwordt een prinses wakker met een vreemd gevoel.",
+    "Ze voelt dat er iets vastzit in de wereld...\nalsof onzichtbare ketens iedereen tegenhouden.",
+    "Maar ergens diep vanbinnen weet ze:\nketens zijn er om gebroken te worden.",
+    "Ze hoort gefluister over een munt...\nCBS Coin – Community Builds Sovereignty.",
+    "Niet gemaakt door koningen of banken,\nmaar door gewone mensen die samen bouwen.",
+    "Onze prinses besluit één ding:\nze gaat op pad om de ketens te breken.",
+    "Dit is nog geen game.\nDit is het begin van het verhaal.",
+    "Druk later opnieuw op ‘Start’\nom de echte ChainBreakers-game te spelen.\n\nVoor nu: onthoud dit…\n\nJe hebt geen kroon nodig om vrij te zijn."
+  ];
 
-  // Elke 1.8s een obstakel spawnen
-  this.time.addEvent({
-    delay: 1800,
-    loop: true,
-    callback: () => {
-      if (!gameOver) spawnObstacle(this);
-    }
+  currentLineIndex = 0;
+
+  storyText = this.add.text(width * 0.4, height * 0.2, "", {
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontSize: "18px",
+    color: "#e5e7eb",
+    wordWrap: { width: width * 0.52 },
+    lineSpacing: 6
   });
-}
+  storyText.setOrigin(0, 0);
 
-function update(time, delta) {
-  if (gameOver) return;
-
-  if (
-    (Phaser.Input.Keyboard.JustDown(spaceKey) ||
-      Phaser.Input.Keyboard.JustDown(cursors.up)) &&
-    player.body.blocked.down
-  ) {
-    jump();
-  }
-
-  // Score elke 250ms +1
-  scoreTimer += delta;
-  if (scoreTimer >= 250) {
-    score++;
-    scoreText.setText("Score: " + score);
-    scoreTimer = 0;
-  }
-
-  // Obstakels opruimen die uit beeld zijn
-  obstacles.getChildren().forEach((o) => {
-    if (o.x < -60) {
-      o.destroy();
-    }
+  hintText = this.add.text(width - 20, height - 16, "Klik of druk op SPATIE om verder te gaan", {
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontSize: "13px",
+    color: "#9ca3af"
   });
+  hintText.setOrigin(1, 1);
+
+  // Eerste regel tonen
+  showCurrentLine(this);
+
+  // Input: spatie + klik/tap
+  const spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  this.input.on("pointerdown", () => advanceStory(this));
+  spaceKey.on("down", () => advanceStory(this));
 }
 
 // ===== HELPER FUNCTIES =====
 
-function jump() {
-  if (!player || !player.body) return;
-  if (player.body.blocked.down) {
-    player.setVelocityY(-520);
-  }
+function showCurrentLine(scene) {
+  const line = storyLines[currentLineIndex] || "";
+  storyText.setText(line);
 }
 
-function spawnObstacle(scene) {
-  const { width, height } = scene.scale;
-  const groundHeight = 40;
-  const obstacleHeight = Phaser.Math.Between(30, 70);
+function advanceStory(scene) {
+  currentLineIndex++;
 
-  const obs = scene.physics.add.sprite(
-    width + 40,
-    height - groundHeight - obstacleHeight / 2,
-    "obstacleTex"
-  );
+  if (currentLineIndex >= storyLines.length) {
+    // Einde verhaal – kleine boodschap en hint
+    currentLineIndex = storyLines.length - 1;
 
-  obs.setScale(2, obstacleHeight / 32);
-  obs.setImmovable(true);
-  obs.body.allowGravity = false;
-  obs.body.setVelocityX(-260);
+    storyText.setText(
+      "Dit was de proloog van ChainBreakers.\n\n" +
+      "Straks gaan we haar echt laten rennen,\nobstakels ontwijken en ketens breken.\n\n" +
+      "Voor nu kun je de pagina verversen\nom het verhaal opnieuw te lezen."
+    );
 
-  obstacles.add(obs);
-}
-
-function hitObstacle(playerObj, obstacleObj) {
-  if (gameOver) return;
-  gameOver = true;
-
-  playerObj.setTint(0xff4b4b);
-  playerObj.setVelocityX(0);
-  obstacleObj.body.setVelocityX(0);
-
-  if (playerObj.anims) {
-    playerObj.anims.pause();
+    hintText.setText("Einde verhaal – ververs de pagina om opnieuw te beginnen");
+    return;
   }
 
-  const { width, height } = playerObj.scene.scale;
-
-  playerObj.scene.add
-    .text(width / 2, height / 2, "GAME OVER", {
-      fontSize: "36px",
-      color: "#fca5a5"
-    })
-    .setOrigin(0.5);
-
-  playerObj.scene.add
-    .text(width / 2, height / 2 + 40, "Refresh om opnieuw te spelen", {
-      fontSize: "16px",
-      color: "#9ca3af"
-    })
-    .setOrigin(0.5);
+  showCurrentLine(scene);
 }
