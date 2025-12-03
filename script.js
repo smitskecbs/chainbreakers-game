@@ -23,7 +23,7 @@ function preload() {
   // Achtergrond (900x400). Heb je die niet, haal deze regel weg.
   this.load.image("background", "background.png");
 
-  // Jouw prinses (vierkant, bijv. 512x512, met transparante achtergrond)
+  // Jouw prinses (player.png)
   this.load.image("playerSprite", "player.png");
 }
 
@@ -37,12 +37,12 @@ function create() {
     bg.setDisplaySize(width, height);
   }
 
-  // ===== Prinses netjes links onder =====
-  const floorY = height - 30; // iets boven de onderrand
+  // ===== Prinses – nóg verder naar beneden =====
+  const floorY = height - 10; // bijna helemaal onderin
 
   const player = this.add.image(width * 0.22, floorY, "playerSprite");
   player.setOrigin(0.5, 1);   // onderkant van de sprite staat op floorY
-  player.setScale(0.45);      // kleiner zodat ze niet uit beeld steekt
+  player.setScale(0.45);      // eventueel 0.42 maken als ze nét te groot is
 
   // Heel lichte “adem”-animatie
   this.tweens.add({
@@ -60,7 +60,7 @@ function create() {
     "Ze voelt dat er iets vastzit in de wereld...\nalsof onzichtbare ketens iedereen tegenhouden.",
     "Maar ergens diep vanbinnen weet ze:\nketens zijn er om gebroken te worden.",
     "Ze hoort gefluister over een munt...\nCBS Coin – Community Builds Sovereignty.",
-    "Niet gemaakt door koningen, overheden of banken,\nmaar door gewone mensen die samen bouwen.",
+    "Niet gemaakt door koningen of banken,\nmaar door gewone mensen die samen bouwen.",
     "Onze prinses besluit één ding:\nze gaat op pad om de ketens te breken.",
     "Dit is nog geen game.\nDit is het begin van het verhaal.",
     "Later komt hier de echte ChainBreakers-game.\n\nVoor nu: onthoud dit…\n\nJe hebt geen kroon nodig om vrij te zijn."
@@ -85,8 +85,8 @@ function create() {
   });
   storyText.setOrigin(0, 0);
 
-  // ===== Hint onderin (nu duidelijk zichtbaar) =====
-  hintText = this.add.text(width - 24, height - 40,
+  // ===== Hint onderin – nu gecentreerd =====
+  hintText = this.add.text(width / 2, height - 20,
     "Klik of druk op SPATIE om verder te gaan", {
       fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontSize: "13px",
@@ -100,7 +100,7 @@ function create() {
       }
     }
   );
-  hintText.setOrigin(1, 1);
+  hintText.setOrigin(0.5, 1);
 
   // Eerste regel tonen
   showCurrentLine();
