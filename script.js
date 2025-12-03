@@ -20,11 +20,10 @@ window.addEventListener("load", () => {
 });
 
 function preload() {
-  // Achtergrond (optioneel – 900x400 is mooi)
-  // Als je nog geen background.png hebt, haal deze regel weg.
+  // Achtergrond (900x400). Als je die niet hebt, haal deze regel weg.
   this.load.image("background", "background.png");
 
-  // Jouw prinses – player.png (zoals jij ’m hebt gemaakt)
+  // Jouw prinses – player.png
   this.load.image("playerSprite", "player.png");
 }
 
@@ -38,16 +37,18 @@ function create() {
     bg.setDisplaySize(width, height);
   }
 
-  // ===== Prinses =====
-  const player = this.add.image(width * 0.22, height * 0.7, "playerSprite");
-  player.setOrigin(0.5, 1);
-  player.setScale(0.55); // pas aan naar smaak
+  // ===== Prinses (lager en iets naar rechts) =====
+  const floorY = height - 40;          // vlak boven de onderrand van de kaart
 
-  // Kleine idle-animatie (heel zacht op en neer)
+  const player = this.add.image(width * 0.22, floorY, "playerSprite");
+  player.setOrigin(0.5, 1);            // voeten staan op floorY
+  player.setScale(0.52);               // pas aan naar smaak
+
+  // Zachte idle-animatie
   this.tweens.add({
     targets: player,
-    y: player.y - 6,
-    duration: 1200,
+    y: floorY - 8,                     // een beetje op en neer
+    duration: 1300,
     yoyo: true,
     repeat: -1,
     ease: "Sine.inOut"
@@ -67,7 +68,7 @@ function create() {
 
   currentLineIndex = 0;
 
-  storyText = this.add.text(width * 0.4, height * 0.2, "", {
+  storyText = this.add.text(width * 0.4, height * 0.18, "", {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontSize: "18px",
     color: "#e5e7eb",
@@ -76,18 +77,23 @@ function create() {
   });
   storyText.setOrigin(0, 0);
 
-  hintText = this.add.text(width - 20, height - 16, "Klik of druk op SPATIE om verder te gaan", {
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    fontSize: "13px",
-    color: "#9ca3af"
-  });
+  // Hint iets hoger zodat het niet wordt afgesneden
+  hintText = this.add.text(width - 24, height - 32,
+    "Klik of druk op SPATIE om verder te gaan", {
+      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontSize: "13px",
+      color: "#9ca3af"
+    }
+  );
   hintText.setOrigin(1, 1);
 
   // Eerste regel tonen
   showCurrentLine(this);
 
   // Input: spatie + klik/tap
-  const spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  const spaceKey = this.input.keyboard.addKey(
+    Phaser.Input.Keyboard.KeyCodes.SPACE
+  );
   this.input.on("pointerdown", () => advanceStory(this));
   spaceKey.on("down", () => advanceStory(this));
 }
@@ -103,7 +109,6 @@ function advanceStory(scene) {
   currentLineIndex++;
 
   if (currentLineIndex >= storyLines.length) {
-    // Einde verhaal – kleine boodschap en hint
     currentLineIndex = storyLines.length - 1;
 
     storyText.setText(
