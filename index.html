@@ -9,22 +9,27 @@
 
   <style>
     :root{
-      --bg1:#020712; --bg2:#050814;
-      --card:#050b15; --card2:#040812;
-      --fg:#eafffb; --muted:#a8d6cd;
-      --line:rgba(0,255,240,.18);
-      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --bg1:#02040a; --bg2:#05040f;
+      --card:#05070f; --card2:#05040a;
+      --fg:#fffaf0; --muted:#d2c9aa;
+      --line:rgba(255,216,107,.24);
+      --shadow:0 20px 45px rgba(255,216,107,.12), inset 0 0 0 1px rgba(255,216,107,.18);
       --radius:18px;
-      --btnA:#5afff0; --btnB:#2bffe4;
+      --btnA:#ffefb0; --btnB:#e2b542;
       --vh: 1vh;
+      --gold-main:#ffd86b;
+      --gold-strong:#ffcc33;
+      --gold-soft:rgba(255,216,107,.4);
+      --gold-glow:rgba(255,216,107,.9);
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
       background:
-        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        radial-gradient(900px 600px at 100% -10%, rgba(255,216,107,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(255,140,80,.12), transparent 60%),
         linear-gradient(135deg,var(--bg1),var(--bg2));
     }
 
@@ -32,49 +37,49 @@
       position:sticky; top:0; z-index:10;
       display:flex; align-items:center; justify-content:space-between;
       padding:.8rem 1rem;
-      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
-      border-bottom:1px solid rgba(0,255,240,.08);
+      background:linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      border-bottom:1px solid var(--gold-soft);
       backdrop-filter:blur(6px);
     }
     .brand{display:flex; align-items:center; gap:.7rem}
-    .brand h1{margin:0; font-size:1.05rem; color:#bffef2; letter-spacing:.4px}
+    .brand h1{margin:0; font-size:1.05rem; color:var(--gold-main); letter-spacing:.4px; text-shadow:0 0 12px var(--gold-glow)}
 
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
       min-width:120px; padding:12px 18px; border-radius:10px;
       text-decoration:none; font-weight:900; font-size:.94rem;
-      color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB));
-      border:1px solid rgba(0,255,240,.7);
-      box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
+      color:#3a2600; background:linear-gradient(180deg, var(--btnA), var(--btnB));
+      border:1px solid var(--gold-main);
+      box-shadow:0 0 16px var(--gold-glow), 0 0 32px rgba(255,216,107,.4), inset 0 -6px 12px rgba(0,0,0,.22);
       cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
     }
-    .btn:hover{ transform:translateY(-2px) scale(1.03) }
+    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 22px var(--gold-glow) }
     .btn[disabled]{ opacity:.6; cursor:not-allowed; filter:saturate(.7) }
 
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
     .panel{
-      background:linear-gradient(180deg, var(--card), var(--card2));
+      background:radial-gradient(circle at top left, rgba(255,216,107,.12), transparent 55%),
+                 radial-gradient(circle at bottom right, rgba(255,160,90,.16), transparent 60%),
+                 linear-gradient(180deg, var(--card), var(--card2));
       border:1px solid var(--line);
       border-radius:var(--radius);
       padding:18px; margin:16px auto;
       box-shadow:var(--shadow);
     }
 
-    #gamePanel {
-      max-width:520px;
-    }
+    #gamePanel { max-width:520px; }
 
     #gamePanel .card{
-      background:linear-gradient(180deg,#050a13,#040913);
-      border:1px solid rgba(0,255,240,.2);
+      background:linear-gradient(180deg,#05070f,#04040c);
+      border:1px solid var(--gold-soft);
       border-radius:16px; padding:12px;
-      box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
+      box-shadow:inset 0 0 0 1px rgba(255,216,107,.16), 0 10px 22px rgba(0,0,0,.6);
     }
 
     canvas{
       display:block; margin:0 auto;
-      background:#05090d; border-radius:12px; border:1px solid rgba(0,255,240,.12);
-      box-shadow: inset 0 0 0 1px rgba(0,255,240,.05);
+      background:#05090d; border-radius:12px; border:1px solid var(--gold-soft);
+      box-shadow: inset 0 0 0 1px rgba(255,216,107,.18);
       touch-action:none;
     }
     #board{ width:100%; max-width:360px; height:auto; }
@@ -84,8 +89,8 @@
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
-        radial-gradient(70% 60% at 50% 0%, rgba(0,255,240,.07), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85));
+        radial-gradient(70% 60% at 50% 0%, rgba(255,216,107,.18), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.8), rgba(0,0,0,.9));
       align-items:center; justify-content:center; flex-direction:column; gap:12px;
       touch-action:none;
       padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px);
@@ -96,29 +101,33 @@
       max-width: 520px;
       max-height: calc(var(--vh) * 100 - 190px);
       display:flex; align-items:center; justify-content:center;
-      background:linear-gradient(180deg,#050b13,#040913);
-      border:1px solid rgba(0,255,240,.22);
+      background:linear-gradient(180deg,#05070f,#04040c);
+      border:1px solid var(--gold-main);
       border-radius:16px; padding:10px;
-      box-shadow:0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
+      box-shadow:0 22px 48px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,216,107,.25);
       overflow:hidden; position:relative;
     }
     .play-overlay .stage canvas{
       width:100%; height:auto;
       max-height: calc(var(--vh) * 100 - 230px);
-      border-radius:12px; border:1px solid rgba(0,255,240,.12);
+      border-radius:12px; border:1px solid var(--gold-soft);
+      box-shadow:0 0 18px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,216,107,.18);
     }
 
     .hudbar{
       position:absolute; top:10px; left:10px; z-index:5;
-      pointer-events:none; background:rgba(0,15,20,.55);
-      border:1px solid rgba(0,255,240,.25); border-radius:10px;
+      pointer-events:none; background:rgba(10,5,0,.75);
+      border:1px solid var(--gold-main); border-radius:10px;
       padding:6px 10px; font-weight:700;
-      text-shadow:0 0 12px rgba(0,255,240,.25);
+      text-shadow:0 0 10px var(--gold-glow);
+      box-shadow:0 0 12px rgba(0,0,0,.8);
     }
     .hintbar{
       position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
-      background:rgba(0,15,20,.55); border:1px solid rgba(0,255,240,.25);
-      border-radius:10px; padding:6px 10px; font-weight:700; color:#dff;
+      background:rgba(10,5,0,.78); border:1px solid var(--gold-main);
+      border-radius:10px; padding:6px 10px; font-weight:700; color:#fff8dc;
+      text-shadow:0 0 10px var(--gold-glow);
+      box-shadow:0 0 14px rgba(0,0,0,.85);
     }
 
     .controls{
@@ -127,13 +136,14 @@
     }
     .tbtn{
       min-width:110px; min-height:52px; padding:12px 16px;
-      border-radius:12px; border:1px solid rgba(0,255,240,.35);
-      background:linear-gradient(180deg,#14222a,#0f1a20); color:#dff;
+      border-radius:12px; border:1px solid var(--gold-main);
+      background:linear-gradient(180deg,#3b2605,#2b1a03); color:#ffeec4;
       font-weight:900; font-size:18px;
-      box-shadow:0 10px 22px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,255,240,.06);
+      box-shadow:0 10px 22px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,216,107,.25);
       touch-action:none;
     }
     .tbtn:active{ transform:translateY(1px); }
+
     @media (max-width: 460px){ .tbtn{ min-width:96px; } }
 
     body.play-mode header,
@@ -141,10 +151,8 @@
     body.play-mode main { display:none; }
     body.play-mode .play-overlay{ display:flex; }
 
-    /* HOW TO PLAY PANEL */
     #howtoPanel h3{ margin-top:0 }
 
-    /* SHARE BAR */
     .share-bar{
       display:none;
       margin-top:8px;
@@ -167,17 +175,21 @@
       font-size:0.8rem;
       font-weight:700;
       text-decoration:none;
-      border:1px solid rgba(0,255,240,.6);
-      background:linear-gradient(180deg,#17242c,#0c151b);
-      color:#eafffb;
-      box-shadow:0 6px 14px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,255,240,.08);
+      border:1px solid var(--gold-main);
+      background:linear-gradient(180deg,#392507,#251503);
+      color:#ffeec4;
+      box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
     }
     .share-btn:hover{
       transform:translateY(-1px);
+      box-shadow:0 0 18px var(--gold-glow);
     }
   </style>
 </head>
 <body>
+  <!-- kerst muziek -->
+  <audio id="bgMusic" src="christmas.mp3" loop preload="auto"></audio>
+
   <header class="topbar">
     <div class="brand">
       <h1>CBS Flappy – Christmas</h1>
@@ -227,10 +239,10 @@
     <!-- SHARE BAR ON GAME OVER -->
     <div id="shareBar" class="share-bar">
       <span class="share-label">Share your score:</span>
-      <a id="shareX"        class="share-btn" href="#" target="_blank" rel="noopener noreferrer">X</a>
-      <a id="shareTg"       class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
-      <a id="shareWa"       class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-      <a id="shareFb"       class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+      <a id="shareX"  class="share-btn" href="#" target="_blank" rel="noopener noreferrer">X</a>
+      <a id="shareTg" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
+      <a id="shareWa" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a id="shareFb" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
     </div>
 
     <button id="exitBtn" class="btn">⏹ Exit</button>
@@ -254,6 +266,15 @@
     const shareTg   = document.getElementById('shareTg');
     const shareWa   = document.getElementById('shareWa');
     const shareFb   = document.getElementById('shareFb');
+
+    const music = document.getElementById('bgMusic');
+    function startMusic(){
+      if(!music) return;
+      music.volume = 0.35;
+      if(music.paused){
+        music.play().catch(()=>{});
+      }
+    }
 
     // Sprites
     const birdImg = new Image();
@@ -548,8 +569,8 @@
         ctx.drawImage(bgImg, 0, 0, W, H);
       }else{
         const bg = ctx.createLinearGradient(0,0,0,H);
-        bg.addColorStop(0, "#071017");
-        bg.addColorStop(1, "#09131a");
+        bg.addColorStop(0, "#120a08");
+        bg.addColorStop(1, "#1b1010");
         ctx.fillStyle = bg;
         ctx.fillRect(0,0,W,H);
       }
@@ -580,10 +601,10 @@
 
     function drawFrame(){
       ctx.save();
-      ctx.strokeStyle = "rgba(0,255,240,.35)";
+      ctx.strokeStyle = "rgba(255,216,107,.7)";
       ctx.lineWidth = 3;
-      ctx.shadowColor = "#38f8ff";
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = "rgba(255,216,107,.9)";
+      ctx.shadowBlur = 12;
       ctx.strokeRect(1,1,W-2,H-2);
       ctx.restore();
     }
@@ -594,11 +615,11 @@
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
-        g.addColorStop(0,"rgba(210,240,255,0.98)");
-        g.addColorStop(1,"rgba(120,180,230,0.98)");
+        g.addColorStop(0,"rgba(255,245,220,0.98)");
+        g.addColorStop(1,"rgba(230,185,110,0.98)");
         ctx.fillStyle = g;
         ctx.fillRect(x,y,w,h);
-        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.strokeStyle = "rgba(120,60,10,0.9)";
         ctx.lineWidth = 1.5;
         ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
 
@@ -615,7 +636,7 @@
 
     function drawBird(x,y,r){
       ctx.save();
-      ctx.shadowColor = "#7dffe9";
+      ctx.shadowColor = "rgba(255,216,107,.9)";
       ctx.shadowBlur = 18;
 
       if(birdReady){
@@ -623,12 +644,12 @@
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       }else{
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
-        g.addColorStop(0,"#eaffff");
-        g.addColorStop(1,"#78eaf0");
+        g.addColorStop(0,"#fff7da");
+        g.addColorStop(1,"#ffd86b");
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
         ctx.lineWidth = 1.6;
-        ctx.strokeStyle = "rgba(0,255,240,.7)";
+        ctx.strokeStyle = "rgba(255,216,107,.8)";
         ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
       }
 
@@ -655,8 +676,8 @@
 
       if(birdReady){
         ctx.save();
-        ctx.shadowColor = "#7dffe9";
-        ctx.shadowBlur = 25;
+        ctx.shadowColor = "rgba(255,216,107,.9)";
+        ctx.shadowBlur = 28;
         const size = BIRD_R * 9.0;
         ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
         ctx.restore();
@@ -666,7 +687,7 @@
 
       ctx.save();
       ctx.textAlign = "center";
-      ctx.fillStyle = "#eafffb";
+      ctx.fillStyle = "#fff7dd";
       ctx.font = "bold 26px 'Orbitron', sans-serif";
       ctx.fillText("GAME OVER", cx, cy + 70);
 
@@ -674,7 +695,7 @@
       ctx.fillText(`Score: ${score} points`, cx, cy + 100);
 
       ctx.font = "14px 'Orbitron', sans-serif";
-      ctx.fillStyle = "#a8d6cd";
+      ctx.fillStyle = "#e3d6b0";
       ctx.fillText("Tap / Space to try again", cx, cy + 130);
       ctx.restore();
 
@@ -693,7 +714,7 @@
       gameOverAt = performance.now();
       hintBar.textContent = "";
       drawGameOverFrame();
-      showShare(score);   // <-- share buttons tonen
+      showShare(score);
     }
 
     function enterPlay(){
@@ -717,7 +738,7 @@
       hideShare();
     }
 
-    function doFlap(){ flap(); }
+    function doFlap(){ flap(); startMusic(); }
     btnFlap.addEventListener('click', (e)=>{ e.preventDefault(); doFlap(); }, {passive:false});
     canvas.addEventListener('pointerup', ()=>{ 
       if(document.body.classList.contains('play-mode')) doFlap(); 
@@ -734,6 +755,7 @@
     startBtn.addEventListener('click', ()=>{
       enterPlay();
       prepareGame();
+      startMusic();
     });
     exitBtn.addEventListener('click', ()=> exitPlay());
 
