@@ -81,7 +81,6 @@
 
     .muted{color:var(--muted)}
 
-    /* Fullscreen overlay */
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
@@ -141,6 +140,41 @@
     body.play-mode #controlsPanel,
     body.play-mode main { display:none; }
     body.play-mode .play-overlay{ display:flex; }
+
+    /* HOW TO PLAY PANEL */
+    #howtoPanel h3{ margin-top:0 }
+
+    /* SHARE BAR */
+    .share-bar{
+      display:none;
+      margin-top:8px;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+    }
+    .share-label{
+      font-size:0.8rem;
+      color:var(--muted);
+      margin-right:4px;
+    }
+    .share-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:0.8rem;
+      font-weight:700;
+      text-decoration:none;
+      border:1px solid rgba(0,255,240,.6);
+      background:linear-gradient(180deg,#17242c,#0c151b);
+      color:#eafffb;
+      box-shadow:0 6px 14px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,255,240,.08);
+    }
+    .share-btn:hover{
+      transform:translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -161,7 +195,7 @@
   </div>
 
   <main class="container">
-    <!-- HOW TO PLAY BOVENIN -->
+    <!-- HOW TO PLAY -->
     <div class="panel" id="howtoPanel" style="max-width:880px;">
       <h3>How to play</h3>
       <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
@@ -190,6 +224,15 @@
       <button class="tbtn" id="btnFlap">FLAP</button>
     </div>
 
+    <!-- SHARE BAR ON GAME OVER -->
+    <div id="shareBar" class="share-bar">
+      <span class="share-label">Share your score:</span>
+      <a id="shareX"        class="share-btn" href="#" target="_blank" rel="noopener noreferrer">X</a>
+      <a id="shareTg"       class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
+      <a id="shareWa"       class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a id="shareFb"       class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+    </div>
+
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
@@ -205,6 +248,12 @@
     const playOverlay= document.getElementById('playOverlay');
     const playStage  = document.getElementById('playStage');
     const btnFlap = document.getElementById('btnFlap');
+
+    const shareBar  = document.getElementById('shareBar');
+    const shareX    = document.getElementById('shareX');
+    const shareTg   = document.getElementById('shareTg');
+    const shareWa   = document.getElementById('shareWa');
+    const shareFb   = document.getElementById('shareFb');
 
     // Sprites
     const birdImg = new Image();
@@ -259,6 +308,34 @@
     let gameOverState = false;
     let gameOverAt = 0;
 
+    // ----- SHARE HELPERS -----
+    function updateShareLinks(sc){
+      const url  = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(
+        `I just played the CBS Christmas mini game and scored ${sc} points! 🎄🚀 Try to beat my score:`
+      );
+
+      if (shareX) {
+        shareX.href  = `https://twitter.com/intent/tweet?text=${text}%20${url}`;
+      }
+      if (shareTg) {
+        shareTg.href = `https://t.me/share/url?url=${url}&text=${text}`;
+      }
+      if (shareWa) {
+        shareWa.href = `https://wa.me/?text=${text}%20${url}`;
+      }
+      if (shareFb) {
+        shareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      }
+    }
+    function showShare(sc){
+      updateShareLinks(sc);
+      if(shareBar) shareBar.style.display = "flex";
+    }
+    function hideShare(){
+      if(shareBar) shareBar.style.display = "none";
+    }
+
     function rngGap(){
       return Math.floor(PIPE_GAP_MIN + Math.random() * (PIPE_GAP_MAX - PIPE_GAP_MIN));
     }
@@ -268,7 +345,7 @@
       return Math.floor(pad + Math.random() * Math.max(1, maxTop - pad));
     }
 
-    // ---------- STARS ----------
+    // ---- STARS ----
     function spawnStar(){
       const x = Math.random() * W;
       const y = -20 - Math.random() * 60;
@@ -328,6 +405,7 @@
       stars = [];
       starSpawnAcc = 0;
       gameOverState = false;
+      hideShare();
       updateHUD();
       drawIdleFrame(0);
     }
@@ -358,6 +436,7 @@
       running = true;
       last = 0;
       hintBar.textContent = "";
+      hideShare();
       rafId = requestAnimationFrame(loop);
     }
 
@@ -391,6 +470,7 @@
         starSpawnAcc = 0;
         updateHUD();
         hintBar.textContent = "";
+        hideShare();
         addPipe();
         running = true;
         rafId = requestAnimationFrame(loop);
@@ -508,7 +588,6 @@
       ctx.restore();
     }
 
-    // type = "top" | "bottom"
     function drawPipe(x,y,w,h,type){
       ctx.save();
       if(type === "top" && obstacleUpReady){
@@ -614,6 +693,7 @@
       gameOverAt = performance.now();
       hintBar.textContent = "";
       drawGameOverFrame();
+      showShare(score);   // <-- share buttons tonen
     }
 
     function enterPlay(){
@@ -623,6 +703,7 @@
       document.body.classList.add('play-mode');
       playOverlay.setAttribute('aria-hidden','false');
       updateHUD();
+      hideShare();
     }
     function exitPlay(){
       stopGame();
@@ -633,6 +714,7 @@
       }
       document.body.classList.remove('play-mode');
       playOverlay.setAttribute('aria-hidden','true');
+      hideShare();
     }
 
     function doFlap(){ flap(); }
