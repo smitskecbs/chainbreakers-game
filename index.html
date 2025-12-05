@@ -60,8 +60,9 @@
       box-shadow:var(--shadow);
     }
 
-    .game-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start }
-    @media (max-width:980px){ .game-wrap{ grid-template-columns:1fr } }
+    #gamePanel {
+      max-width:520px;
+    }
 
     #gamePanel .card{
       background:linear-gradient(180deg,#050a13,#040913);
@@ -160,23 +161,18 @@
   </div>
 
   <main class="container">
-    <div class="game-wrap">
-      <div id="gamePanel" class="panel">
-        <div class="card">
-          <div id="canvasHome" style="display:grid;place-items:center">
-            <canvas id="board" width="360" height="540"></canvas>
-          </div>
-        </div>
-      </div>
+    <!-- HOW TO PLAY BOVENIN -->
+    <div class="panel" id="howtoPanel" style="max-width:880px;">
+      <h3>How to play</h3>
+      <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
+      <p><b>Score +1 per gap</b>. Touch snowstorm or ground → game over.</p>
+    </div>
 
-      <div class="side">
-        <div class="panel">
-          <h3>How to play</h3>
-          <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
-          <p><b>Score +1 per gap</b>. Touch snowstorm or ground → game over.</p>
-        </div>
-        <div class="panel" style="text-align:center">
-          <a href="../index.html" class="btn">← Back to Home</a>
+    <!-- GAME PANEL -->
+    <div id="gamePanel" class="panel">
+      <div class="card">
+        <div id="canvasHome" style="display:grid;place-items:center">
+          <canvas id="board" width="360" height="540"></canvas>
         </div>
       </div>
     </div>
@@ -228,7 +224,7 @@
 
     const W = canvas.width, H = canvas.height;
 
-    // Physics (iets milder voor mobiel)
+    // Physics
     const BIRD_X = Math.floor(W * 0.28), BIRD_R = 12;
     const GRAVITY = 1400;
     const FLAP_VY = -420;
@@ -244,7 +240,7 @@
     const OBSTACLE_BOB_SPEED = 0.8;
     const OBSTACLE_BOB_AMPL  = 10;
 
-    // Vallende sterren (kerstnacht)
+    // Vallende sterren
     const STAR_SPAWN_RATE = 1.2;
     const STAR_MIN_SPEED  = 140;
     const STAR_MAX_SPEED  = 240;
@@ -516,10 +512,8 @@
     function drawPipe(x,y,w,h,type){
       ctx.save();
       if(type === "top" && obstacleUpReady){
-        // vallende sneeuw animatie boven
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else{
-        // onder: ijs-pilaar in code
         const g = ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"rgba(210,240,255,0.98)");
         g.addColorStop(1,"rgba(120,180,230,0.98)");
@@ -529,7 +523,6 @@
         ctx.lineWidth = 1.5;
         ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
 
-        // ijs-textuur lijnen
         ctx.globalAlpha = 0.25;
         ctx.beginPath();
         ctx.moveTo(x+5,y+8);
@@ -547,7 +540,7 @@
       ctx.shadowBlur = 18;
 
       if(birdReady){
-        const size = r * 6.0; // grote kerst-slee
+        const size = r * 6.0;
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       }else{
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
