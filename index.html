@@ -246,6 +246,22 @@
     </div>
 
     <button id="exitBtn" class="btn">⏹ Exit</button>
+
+    <!-- subtiele footer link -->
+    <div style="
+      position:absolute;
+      bottom:6px;
+      right:8px;
+      font-size:10px;
+      opacity:0.45;
+      color:#ffe7b8;
+      font-family:'Orbitron', sans-serif;
+      pointer-events:auto;
+    ">
+      <a href="https://cbs-coin.com" target="_blank" style="color:#ffe7b8; text-decoration:none;">
+        cbs-coin.com
+      </a>
+    </div>
   </div>
 
   <!-- Flappy Game JS -->
@@ -333,7 +349,7 @@
     function updateShareLinks(sc){
       const url  = encodeURIComponent(window.location.href);
       const text = encodeURIComponent(
-        `I just played the CBS Christmas mini game and scored ${sc} points! 🎄🚀 Try to beat my score:`
+        `I just played the CBS Christmas mini game on cbs-coin.com and scored ${sc} points! 🎄🚀 Try to beat my score:`
       );
 
       if (shareX) {
@@ -346,6 +362,7 @@
         shareWa.href = `https://wa.me/?text=${text}%20${url}`;
       }
       if (shareFb) {
+        // Facebook sharer ondersteunt vooral de URL; tekst komt via de preview/persoon zelf
         shareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
       }
     }
