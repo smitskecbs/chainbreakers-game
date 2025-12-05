@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Flappy – Christmas Edition</title>
+  <title>Merry Christmas – Mini Game</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -42,7 +42,10 @@
       backdrop-filter:blur(6px);
     }
     .brand{display:flex; align-items:center; gap:.7rem}
-    .brand h1{margin:0; font-size:1.05rem; color:var(--gold-main); letter-spacing:.4px; text-shadow:0 0 12px var(--gold-glow)}
+    .brand h1{
+      margin:0; font-size:1.05rem; color:var(--gold-main);
+      letter-spacing:.4px; text-shadow:0 0 12px var(--gold-glow)
+    }
 
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
@@ -55,6 +58,22 @@
     }
     .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 22px var(--gold-glow) }
     .btn[disabled]{ opacity:.6; cursor:not-allowed; filter:saturate(.7) }
+
+    .icon-btn{
+      min-width:auto;
+      padding:6px 10px;
+      font-size:0.9rem;
+      border-radius:999px;
+      background:linear-gradient(180deg,#3b2605,#2b1a03);
+      color:#ffeec4;
+      border:1px solid var(--gold-main);
+      box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
+      cursor:pointer;
+    }
+    .icon-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 0 16px var(--gold-glow);
+    }
 
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
     .panel{
@@ -179,6 +198,7 @@
       background:linear-gradient(180deg,#392507,#251503);
       color:#ffeec4;
       box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
+      cursor:pointer;
     }
     .share-btn:hover{
       transform:translateY(-1px);
@@ -192,8 +212,9 @@
 
   <header class="topbar">
     <div class="brand">
-      <h1>CBS Flappy – Christmas</h1>
+      <h1>Merry Christmas</h1>
     </div>
+    <button id="muteBtn" class="icon-btn" title="Mute / unmute">🔊</button>
   </header>
 
   <!-- Controls -->
@@ -243,6 +264,7 @@
       <a id="shareTg" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
       <a id="shareWa" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
       <a id="shareFb" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+      <button id="btnShot" class="share-btn" type="button">Download image</button>
     </div>
 
     <button id="exitBtn" class="btn">⏹ Exit</button>
@@ -282,10 +304,32 @@
     const shareTg   = document.getElementById('shareTg');
     const shareWa   = document.getElementById('shareWa');
     const shareFb   = document.getElementById('shareFb');
+    const btnShot   = document.getElementById('btnShot');
 
-    const music = document.getElementById('bgMusic');
+    const music   = document.getElementById('bgMusic');
+    const muteBtn = document.getElementById('muteBtn');
+    let isMuted = false;
+
+    function updateMuteUI(){
+      if(!muteBtn) return;
+      muteBtn.textContent = isMuted ? "🔇" : "🔊";
+      muteBtn.title = isMuted ? "Unmute" : "Mute";
+    }
+    function setMuted(m){
+      isMuted = m;
+      if(music){
+        music.muted = m;
+        if(m) music.pause();
+      }
+      updateMuteUI();
+    }
+    updateMuteUI();
+    if(muteBtn){
+      muteBtn.addEventListener('click', ()=> setMuted(!isMuted));
+    }
+
     function startMusic(){
-      if(!music) return;
+      if(!music || isMuted) return;
       music.volume = 0.35;
       if(music.paused){
         music.play().catch(()=>{});
@@ -304,9 +348,14 @@
     bgImg.onload = () => { bgReady = true; };
 
     const obstacleUpImg = new Image();
-    obstacleUpImg.src = "obstacle-up.gif"; // vallende sneeuw (boven)
+    obstacleUpImg.src = "obstacle-up.gif"; // sneeuw boven
     let obstacleUpReady = false;
     obstacleUpImg.onload = () => { obstacleUpReady = true; };
+
+    const obstacleDownImg = new Image();
+    obstacleDownImg.src = "obstacle-down.png"; // onderkant obstakel
+    let obstacleDownReady = false;
+    obstacleDownImg.onload = () => { obstacleDownReady = true; };
 
     const W = canvas.width, H = canvas.height;
 
@@ -362,7 +411,6 @@
         shareWa.href = `https://wa.me/?text=${text}%20${url}`;
       }
       if (shareFb) {
-        // Facebook sharer ondersteunt vooral de URL; tekst komt via de preview/persoon zelf
         shareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
       }
     }
@@ -372,6 +420,23 @@
     }
     function hideShare(){
       if(shareBar) shareBar.style.display = "none";
+    }
+
+    // Screenshot / download image
+    if(btnShot){
+      btnShot.addEventListener('click', ()=>{
+        try{
+          const dataUrl = canvas.toDataURL("image/png");
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `cbs-christmas-score-${score}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }catch(e){
+          alert("Screenshot download is not supported in this browser.");
+        }
+      });
     }
 
     function rngGap(){
@@ -630,6 +695,8 @@
       ctx.save();
       if(type === "top" && obstacleUpReady){
         ctx.drawImage(obstacleUpImg, x, y, w, h);
+      }else if(type === "bottom" && obstacleDownReady){
+        ctx.drawImage(obstacleDownImg, x, y, w, h);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"rgba(255,245,220,0.98)");
@@ -791,3 +858,4 @@
   </script>
 </body>
 </html>
+
