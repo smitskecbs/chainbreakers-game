@@ -370,17 +370,21 @@
     const obstacleDownImg = new Image();
     obstacleDownImg.src = "obstacle-down.png"; // sneeuwballen op de grond
     let obstacleDownReady = false;
-    const PIPE_W = 64;
-    let bottomSpriteHeight = 80; // vaste basishoogte voor sneeuwballen
-
-    obstacleDownImg.onload = () => {
-      obstacleDownReady = true;
-      // optioneel: licht aanpassen op basis van aspect, maar niet mega hoog
-      const aspect = obstacleDownImg.height / obstacleDownImg.width || 1;
-      bottomSpriteHeight = Math.min(96, PIPE_W * aspect);
-    };
 
     const W = canvas.width, H = canvas.height;
+
+    // breedte van de "pipe" boven (sneeuwstorm)
+    const PIPE_W = 64;
+
+    // echte grootte van de sneeuwballen-sprite (onder) – NIET schalen
+    let bottomSpriteWidth  = 64;
+    let bottomSpriteHeight = 64;
+
+    obstacleDownImg.onload = () => {
+      obstacleDownReady   = true;
+      bottomSpriteWidth   = obstacleDownImg.width;
+      bottomSpriteHeight  = obstacleDownImg.height;
+    };
 
     // Physics
     const BIRD_X = Math.floor(W * 0.28), BIRD_R = 12;
@@ -444,15 +448,17 @@
       if(shareBar) shareBar.style.display = "none";
     }
 
-    // Bepaal top-positie van sneeuwstorm zó dat gap tussen storm en sneeuwballen netjes blijft
+    // Bepaal top-positie van de sneeuwstorm (boven)
     function rngTop(){
-      const bottomTop = H - bottomSpriteHeight; // Y waar sneeuwballen beginnen
+      const bottomH  = bottomSpriteHeight || 64;
+      const bottomTop = H - bottomH; // Y waar sneeuwballen beginnen (grond)
+
       const minGap = PIPE_GAP_MIN;
       const maxGap = PIPE_GAP_MAX;
 
-      // we willen: gap = bottomTop - topHeight binnen [minGap, maxGap]
-      let low  = bottomTop - maxGap; // hoogste top (kleinste gap)
-      let high = bottomTop - minGap; // laagste top (grootste gap)
+      // we willen: gap = bottomTop - topHeight ∈ [minGap, maxGap]
+      let low  = bottomTop - maxGap; // hoogst mogelijke top (kleine gap)
+      let high = bottomTop - minGap; // laagst mogelijke top (grote gap)
 
       const TOP_PAD = 40;
       if (low < TOP_PAD) low = TOP_PAD;
@@ -638,7 +644,7 @@
         }
       }
 
-      // world bounds
+      // wereldrand
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){
         return gameOver();
       }
@@ -646,11 +652,11 @@
       const bottomTop = H - bottomSpriteHeight;
 
       for(const p of pipes){
-        // top: sneeuwstorm
+        // bovenste sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
 
-        // bottom: sneeuwballen (altijd op de grond)
-        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, bottomTop, PIPE_W, bottomSpriteHeight)) return gameOver();
+        // onderste sneeuwballen – exacte sprite-size op de grond
+        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, bottomTop, bottomSpriteWidth, bottomSpriteHeight)) return gameOver();
       }
 
       draw();
@@ -684,10 +690,10 @@
       const bottomTop = H - bottomSpriteHeight;
 
       for(const p of pipes){
-        // bovenste sneeuwstorm
+        // boven: sneeuwstorm (wordt in hoogte geschaald, dat mag)
         drawPipe(p.x, 0, PIPE_W, p.top, "top");
-        // onderste sneeuwballen op de grond
-        drawPipe(p.x, bottomTop, PIPE_W, bottomSpriteHeight, "bottom");
+        // onder: sneeuwballen – NIET vervormen, gewoon eigen sprite-grootte
+        drawPipe(p.x, bottomTop, bottomSpriteWidth, bottomSpriteHeight, "bottom");
       }
 
       drawBird(BIRD_X, birdY, BIRD_R);
@@ -715,11 +721,11 @@
     function drawPipe(x,y,w,h,type){
       ctx.save();
       if(type === "top" && obstacleUpReady){
-        // sneeuwstorm
+        // sneeuwstorm – mag geschaald worden in hoogte
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else if(type === "bottom" && obstacleDownReady){
-        // sneeuwballen – licht geschaald, vaste hoogte
-        ctx.drawImage(obstacleDownImg, x, y, w, h);
+        // sneeuwballen – GEEN vervorming: gebruik exact spritegrootte
+        ctx.drawImage(obstacleDownImg, x, y);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"rgba(255,245,220,0.98)");
@@ -775,7 +781,7 @@
       ctx.globalAlpha = 0.35;
       for(const p of pipes){
         drawPipe(p.x, 0, PIPE_W, p.top, "top");
-        drawPipe(p.x, bottomTop, PIPE_W, bottomSpriteHeight, "bottom");
+        drawPipe(p.x, bottomTop, bottomSpriteWidth, bottomSpriteHeight, "bottom");
       }
       ctx.restore();
 
