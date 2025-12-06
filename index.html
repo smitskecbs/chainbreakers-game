@@ -232,8 +232,8 @@
     <div class="panel" id="howtoPanel" style="max-width:880px;">
       <h3>How to play</h3>
       <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
-      <p><b>Score +1 per gap</b>. Hit the snowstorm above, the ice spikes on the ground, or the floor → game over.</p>
-      <p>Grab the <b>gifts</b> for <b>extra bonus points</b> 🎁.</p>
+      <p><b>Score +1 per gap</b>. Hit the snowstorm above, the ice blocks on the ground, or the floor → game over.</p>
+      <p>Grab the <b>gifts</b> (present, candy cane, gingerbread) for <b>extra bonus points</b> 🎁.</p>
     </div>
 
     <!-- GAME PANEL -->
@@ -368,17 +368,20 @@
     let obstacleUpReady = false;
     obstacleUpImg.onload = () => { obstacleUpReady = true; };
 
-    const bonusImg = new Image();
-    bonusImg.src = "bonus.png"; // cadeautje
-    let bonusReady = false;
-    bonusImg.onload = () => { bonusReady = true; };
+    // Bonus sprites: present, candy cane, gingerbread
+    const bonusSpriteSources = ["bonus.png", "bonus1.png", "bonus2.png"];
+    const bonusImgs = bonusSpriteSources.map(src => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
 
     const W = canvas.width, H = canvas.height;
 
     // Obstakel maten
     const PIPE_W = 64;                // breedte van pijp / sneeuwstorm
-    const BOTTOM_MIN_H = 110;         // minimale hoogte ijsstaven
-    const BOTTOM_MAX_H = 210;         // maximale hoogte ijsstaven
+    const BOTTOM_MIN_H = 110;         // minimale hoogte ijsblok
+    const BOTTOM_MAX_H = 210;         // maximale hoogte ijsblok
 
     const GAP_MIN = 140;              // minimum opening
     const GAP_MAX = 230;              // maximum opening
@@ -580,7 +583,8 @@
             x: bx,
             y: by,
             r: BONUS_RADIUS,
-            collected:false
+            collected:false,
+            kind: Math.floor(Math.random() * bonusImgs.length) // 0,1,2
           });
         }
       }
@@ -660,7 +664,7 @@
       for(const p of pipes){
         // boven: sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
-        // onder: ijsstaven
+        // onder: ijsblok
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, p.bottomTop, PIPE_W, p.bottomH)) return gameOver();
       }
 
@@ -712,14 +716,14 @@
       for(const p of pipes){
         // bovenste sneeuwstorm
         drawTopPipe(p.x, 0, PIPE_W, p.top);
-        // onderste ijsstaven
-        drawBottomIce(p.x, p.bottomTop, PIPE_W, p.bottomH);
+        // onderste ijsblokken
+        drawBottomIceBlock(p.x, p.bottomTop, PIPE_W, p.bottomH);
       }
 
       // Cadeautjes tekenen
       for(const b of bonuses){
         if(b.collected) continue;
-        drawBonus(b.x, b.y, b.r);
+        drawBonus(b.x, b.y, b.r, b.kind);
       }
 
       drawBird(BIRD_X, birdY, BIRD_R);
@@ -758,60 +762,39 @@
       ctx.restore();
     }
 
-    // blauwe ijsstaven uit code
-    function drawBottomIce(x,y,w,h){
+    // simpele blauwe ijsblokken
+    function drawBottomIceBlock(x,y,w,h){
       ctx.save();
 
-      // basis blok ijs
+      // body
       const g = ctx.createLinearGradient(x, y, x, y+h);
       g.addColorStop(0, "rgba(210,240,255,0.98)");
-      g.addColorStop(0.5, "rgba(120,185,240,0.98)");
+      g.addColorStop(0.5, "rgba(130,190,245,0.98)");
       g.addColorStop(1, "rgba(40,90,160,0.98)");
       ctx.fillStyle = g;
       ctx.fillRect(x, y, w, h);
 
-      // glans links
-      ctx.globalAlpha = 0.45;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.fillRect(x + 4, y + 6, 6, h - 12);
+      // glansstrepen
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.fillRect(x + 4, y + 6, 4, h - 12);
+      ctx.fillRect(x + w - 8, y + 10, 3, h - 20);
 
-      // ijsspikes aan de bovenkant
-      ctx.globalAlpha = 0.9;
-      const spikes = 5 + Math.floor(Math.random()*3); // 5–7 spikes
-      for(let i=0; i<spikes; i++){
-        const baseX = x + (i + 0.3) * (w / spikes);
-        const tipOffset = 8 + Math.random()*16;
-
-        ctx.beginPath();
-        ctx.moveTo(baseX - 6, y + tipOffset);
-        ctx.lineTo(baseX + 6, y + tipOffset);
-        ctx.lineTo(baseX, y);
-        ctx.closePath();
-
-        const sg = ctx.createLinearGradient(baseX, y, baseX, y + tipOffset);
-        sg.addColorStop(0, "rgba(240,255,255,0.95)");
-        sg.addColorStop(1, "rgba(80,170,255,0.9)");
-        ctx.fillStyle = sg;
-        ctx.fill();
-      }
-
-      // randje bovenkant
+      // rand
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = "rgba(255,255,255,0.85)";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(x, y+0.5);
-      ctx.lineTo(x+w, y+0.5);
-      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 1.3;
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 
       ctx.restore();
     }
 
-    function drawBonus(x,y,r){
+    function drawBonus(x,y,r,kind){
       ctx.save();
       const size = r*2;
-      if(bonusReady){
-        ctx.drawImage(bonusImg, x - size/2, y - size/2, size, size);
+      const img = bonusImgs[kind] || null;
+      if(img && img.complete){
+        ctx.drawImage(img, x - size/2, y - size/2, size, size);
       }else{
         const g = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2,x,y,r);
         g.addColorStop(0,"#fff7da");
@@ -856,7 +839,7 @@
       ctx.globalAlpha = 0.35;
       for(const p of pipes){
         drawTopPipe(p.x, 0, PIPE_W, p.top);
-        drawBottomIce(p.x, p.bottomTop, PIPE_W, p.bottomH);
+        drawBottomIceBlock(p.x, p.bottomTop, PIPE_W, p.bottomH);
       }
       ctx.restore();
 
