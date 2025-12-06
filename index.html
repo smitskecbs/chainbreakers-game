@@ -368,14 +368,6 @@
     let obstacleUpReady = false;
     obstacleUpImg.onload = () => { obstacleUpReady = true; };
 
-    const obstacleDownImg1 = new Image();
-    obstacleDownImg1.src = "obstacle-down.png"; // lage ijspegels
-    let bottom1Ready = false;
-
-    const obstacleDownImg2 = new Image();
-    obstacleDownImg2.src = "obstacle-down2.png"; // hogere ijspegels
-    let bottom2Ready = false;
-
     const bonusImg = new Image();
     bonusImg.src = "bonus.png"; // cadeautje
     let bonusReady = false;
@@ -383,16 +375,13 @@
 
     const W = canvas.width, H = canvas.height;
 
-    // Bovenste sneeuwstorm-breedte
-    const PIPE_W = 64;
+    // Obstakel maten
+    const PIPE_W = 64;                // breedte van pijp / sneeuwstorm
+    const BOTTOM_MIN_H = 110;         // minimale hoogte ijsstaven
+    const BOTTOM_MAX_H = 210;         // maximale hoogte ijsstaven
 
-    // Onderste ijspegels – we mogen uitrekken
-    const BOTTOM1_H = 140;  // lagere variant
-    const BOTTOM2_H = 220;  // hogere variant (mag best uitgerekt)
-    const BOTTOM_W  = 96;   // vaste breedte in het spel
-
-    bottom1Ready = true; // we rekken toch, dus onload niet cruciaal
-    bottom2Ready = true;
+    const GAP_MIN = 140;              // minimum opening
+    const GAP_MAX = 230;              // maximum opening
 
     // Physics
     const BIRD_X = Math.floor(W * 0.28), BIRD_R = 12;
@@ -400,15 +389,9 @@
     const FLAP_VY = -420;
     const MAX_VY  = 640;
 
-    // Gap tussen boven en onder – vrij breed bereik
-    const PIPE_GAP_MIN = 130;
-    const PIPE_GAP_MAX = 230;
     const PIPE_SPAWN_MS = 1550;
     const SPEED_START = 130;
     const SPEED_INC   = 0.010;
-
-    const OBSTACLE_BOB_SPEED = 0.8;
-    const OBSTACLE_BOB_AMPL  = 10;
 
     // Bonus settings
     const BONUS_RADIUS = 14;
@@ -463,23 +446,6 @@
       if(shareBar) shareBar.style.display = "none";
     }
 
-    // Hoogte van de bovenste sneeuwstorm bepalen, afhankelijk van gekozen onder-hoogte
-    function rngTop(bottomH){
-      const bottomTop = H - bottomH;
-      const minGap = PIPE_GAP_MIN;
-      const maxGap = PIPE_GAP_MAX;
-
-      // gap = bottomTop - topHeight ∈ [minGap, maxGap]
-      let low  = bottomTop - maxGap;
-      let high = bottomTop - minGap;
-
-      const TOP_PAD = 40;
-      if (low < TOP_PAD) low = TOP_PAD;
-      if (high <= low) high = low + 1;
-
-      return Math.floor(low + Math.random() * (high - low));
-    }
-
     // ---- STARS ----
     function spawnStar(){
       const x = Math.random() * W;
@@ -528,6 +494,7 @@
       ctx.restore();
     }
 
+    // ---- CORE RESET ----
     function resetCore(){
       birdY = H / 2;
       birdVy = 0;
@@ -577,29 +544,34 @@
       rafId = requestAnimationFrame(loop);
     }
 
+    // ---- PIPE / BONUS SPAWN ----
     function addPipe(){
-      // Random kiezen: lage of hoge ijspegels
-      const useVariant2 = Math.random() < 0.5;
-      const bottomH = useVariant2 ? BOTTOM2_H : BOTTOM1_H;
+      // Random hoogte onder
+      const bottomH = BOTTOM_MIN_H + Math.random() * (BOTTOM_MAX_H - BOTTOM_MIN_H);
+      const bottomTop = H - bottomH;
 
-      const top = rngTop(bottomH);
+      // Random gap hoogte
+      const gap = GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
+      let top = bottomTop - gap;
+
+      const TOP_PAD = 40;
+      if(top < TOP_PAD){
+        top = TOP_PAD;
+      }
 
       const p = {
         x: W + 6,
-        baseTop: top,
         top,
-        passed: false,
-        phase: Math.random() * Math.PI * 2,
-        bottomVariant: useVariant2 ? 2 : 1,
-        bottomH
+        bottomTop,
+        bottomH,
+        passed: false
       };
       pipes.push(p);
 
-      // Kans op een cadeautje in de gap van deze pipe
+      // Kans op cadeautje in de gap
       if(Math.random() < BONUS_CHANCE){
-        const bottomTop = H - bottomH;
-        const gapTop = top + 30;
-        const gapBottom = bottomTop - 30;
+        const gapTop = top + 20;
+        const gapBottom = bottomTop - 20;
 
         if(gapBottom - gapTop > 60){
           const by = gapTop + Math.random() * (gapBottom - gapTop);
@@ -614,6 +586,7 @@
       }
     }
 
+    // ---- INPUT / FLAP ----
     function flap(){
       if(gameOverState){
         const now = performance.now();
@@ -637,6 +610,7 @@
 
     function updateHUD(){ hudBar.textContent = `Score ${score}`; }
 
+    // ---- MAIN LOOP ----
     function loop(ts){
       if(!running) return;
       if(!last) last = ts;
@@ -660,11 +634,8 @@
 
       for(const p of pipes){
         p.x -= speed * dtSec;
-        // bovenste sneeuwstorm beweegt een beetje
-        p.top = p.baseTop + Math.sin(timeSec * OBSTACLE_BOB_SPEED + p.phase) * OBSTACLE_BOB_AMPL;
       }
 
-      // Bonuses mee laten scrollen
       for(const b of bonuses){
         b.x -= speed * dtSec;
       }
@@ -687,14 +658,10 @@
 
       // Collisions met obstakels
       for(const p of pipes){
-        const bottomTop = H - p.bottomH;
-
         // boven: sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
-
-        // onder: ijspegels
-        const wBottom = BOTTOM_W;
-        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, bottomTop, wBottom, p.bottomH)) return gameOver();
+        // onder: ijsstaven
+        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, p.bottomTop, PIPE_W, p.bottomH)) return gameOver();
       }
 
       // Collisions met cadeautjes (bonus)
@@ -724,6 +691,7 @@
       return (dx*dx + dy*dy) <= cr*cr;
     }
 
+    // ---- DRAW ----
     function drawBG(){
       if(bgReady){
         ctx.drawImage(bgImg, 0, 0, W, H);
@@ -742,13 +710,10 @@
       drawStars();
 
       for(const p of pipes){
-        const bottomTop = H - p.bottomH;
-
-        // Bovenste sneeuwstorm
+        // bovenste sneeuwstorm
         drawTopPipe(p.x, 0, PIPE_W, p.top);
-
-        // Onderste ijspegels
-        drawBottomPipe(p.x, bottomTop, BOTTOM_W, p.bottomH, p.bottomVariant);
+        // onderste ijsstaven
+        drawBottomIce(p.x, p.bottomTop, PIPE_W, p.bottomH);
       }
 
       // Cadeautjes tekenen
@@ -793,19 +758,52 @@
       ctx.restore();
     }
 
-    function drawBottomPipe(x,y,w,h,variant){
+    // blauwe ijsstaven uit code
+    function drawBottomIce(x,y,w,h){
       ctx.save();
-      if(variant === 2 && bottom2Ready){
-        ctx.drawImage(obstacleDownImg2, x, y, w, h); // mag uitgerekt worden
-      }else if(variant === 1 && bottom1Ready){
-        ctx.drawImage(obstacleDownImg1, x, y, w, h); // mag ook uitgerekt worden
-      }else{
-        const g = ctx.createLinearGradient(x,y,x,y+h);
-        g.addColorStop(0,"rgba(210,235,255,0.98)");
-        g.addColorStop(1,"rgba(130,180,235,0.98)");
-        ctx.fillStyle = g;
-        ctx.fillRect(x,y,w,h);
+
+      // basis blok ijs
+      const g = ctx.createLinearGradient(x, y, x, y+h);
+      g.addColorStop(0, "rgba(210,240,255,0.98)");
+      g.addColorStop(0.5, "rgba(120,185,240,0.98)");
+      g.addColorStop(1, "rgba(40,90,160,0.98)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x, y, w, h);
+
+      // glans links
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillRect(x + 4, y + 6, 6, h - 12);
+
+      // ijsspikes aan de bovenkant
+      ctx.globalAlpha = 0.9;
+      const spikes = 5 + Math.floor(Math.random()*3); // 5–7 spikes
+      for(let i=0; i<spikes; i++){
+        const baseX = x + (i + 0.3) * (w / spikes);
+        const tipOffset = 8 + Math.random()*16;
+
+        ctx.beginPath();
+        ctx.moveTo(baseX - 6, y + tipOffset);
+        ctx.lineTo(baseX + 6, y + tipOffset);
+        ctx.lineTo(baseX, y);
+        ctx.closePath();
+
+        const sg = ctx.createLinearGradient(baseX, y, baseX, y + tipOffset);
+        sg.addColorStop(0, "rgba(240,255,255,0.95)");
+        sg.addColorStop(1, "rgba(80,170,255,0.9)");
+        ctx.fillStyle = sg;
+        ctx.fill();
       }
+
+      // randje bovenkant
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x, y+0.5);
+      ctx.lineTo(x+w, y+0.5);
+      ctx.stroke();
+
       ctx.restore();
     }
 
@@ -857,9 +855,8 @@
       ctx.save();
       ctx.globalAlpha = 0.35;
       for(const p of pipes){
-        const bottomTop = H - p.bottomH;
         drawTopPipe(p.x, 0, PIPE_W, p.top);
-        drawBottomPipe(p.x, bottomTop, BOTTOM_W, p.bottomH, p.bottomVariant);
+        drawBottomIce(p.x, p.bottomTop, PIPE_W, p.bottomH);
       }
       ctx.restore();
 
@@ -894,6 +891,7 @@
       drawFrame();
     }
 
+    // ---- GAME STATE ----
     function stopGame(){
       running = false;
       if(rafId) cancelAnimationFrame(rafId);
