@@ -439,10 +439,11 @@
     function updateShareLinks(sc){
       const url  = encodeURIComponent(window.location.href);
       const text = encodeURIComponent(
-        `I just played the CBS Christmas mini game on cbs-coin.com and scored ${sc} points! 🎄🚀 Try to beat my score:`
+        `I just played this CBS Christmas mini game (built by @smitske180) and scored ${sc} points! 🎄🚀 Try to beat my score:`
       );
 
       if (shareX) {
+        // X: tekst + link naar de gamepagina
         shareX.href  = `https://twitter.com/intent/tweet?text=${text}%20${url}`;
       }
       if (shareTg) {
@@ -874,7 +875,7 @@
       ctx.font = "bold 26px 'Orbitron', sans-serif";
       ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
 
-      // Subtiel: from CBS Coin
+      // Subtiel: from CBS Coin (klikbaar gemaakt via canvas-click handler)
       ctx.font = "14px 'Orbitron', sans-serif";
       ctx.fillStyle = "#e3d6b0";
       ctx.fillText("from CBS Coin", cx, cy + 92);
@@ -937,11 +938,50 @@
       }
     }
 
+    // Klik handler voor canvas:
+    // - tijdens game: flap
+    // - bij game over: klik op "from CBS Coin" opent cbs-coin.com
+    function handleCanvasClick(e){
+      if(!document.body.classList.contains('play-mode')) return;
+
+      // Mouse coords → canvas coords (ivm CSS scaling)
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      if(gameOverState){
+        const cx = W / 2;
+        const cy = H / 2 - 30;
+        const tx = cx;
+        const ty = cy + 92;
+
+        // klik-zone rondom "from CBS Coin"
+        const rw = 220; // breedte
+        const rh = 28;  // hoogte
+
+        if(
+          x > tx - rw/2 && x < tx + rw/2 &&
+          y > ty - rh/2 && y < ty + rh/2
+        ){
+          window.open("https://cbs-coin.com", "_blank");
+          return;
+        }
+      }
+
+      // anders gewoon flap
+      doFlap();
+    }
+
     function doFlap(){ flap(); startMusic(); }
+
     btnFlap.addEventListener('click', (e)=>{ e.preventDefault(); doFlap(); }, {passive:false});
-    canvas.addEventListener('pointerup', ()=>{ 
-      if(document.body.classList.contains('play-mode')) doFlap(); 
+
+    canvas.addEventListener('pointerup', (e)=>{ 
+      if(document.body.classList.contains('play-mode')) handleCanvasClick(e); 
     }, {passive:true});
+
     window.addEventListener('keydown', (e)=>{
       if(!document.body.classList.contains('play-mode')) return;
       if(e.key === ' '){
