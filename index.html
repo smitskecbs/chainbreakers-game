@@ -250,6 +250,17 @@
     <div class="stage">
       <div class="hudbar" id="hudBar">Score 0</div>
       <div class="hintbar" id="hintBar">Tap / Space to start</div>
+
+      <!-- Mute knop in speelveld -->
+      <button
+        id="muteBtnOverlay"
+        class="icon-btn"
+        title="Mute / unmute"
+        style="position:absolute;top:10px;right:10px;z-index:6;"
+      >
+        🔊
+      </button>
+
       <div id="playStage"></div>
     </div>
 
@@ -264,7 +275,6 @@
       <a id="shareTg" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
       <a id="shareWa" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
       <a id="shareFb" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
-      <button id="btnShot" class="share-btn" type="button">Download image</button>
     </div>
 
     <button id="exitBtn" class="btn">⏹ Exit</button>
@@ -304,16 +314,18 @@
     const shareTg   = document.getElementById('shareTg');
     const shareWa   = document.getElementById('shareWa');
     const shareFb   = document.getElementById('shareFb');
-    const btnShot   = document.getElementById('btnShot');
 
     const music   = document.getElementById('bgMusic');
     const muteBtn = document.getElementById('muteBtn');
+    const muteBtnOverlay = document.getElementById('muteBtnOverlay');
     let isMuted = false;
 
     function updateMuteUI(){
-      if(!muteBtn) return;
-      muteBtn.textContent = isMuted ? "🔇" : "🔊";
-      muteBtn.title = isMuted ? "Unmute" : "Mute";
+      [muteBtn, muteBtnOverlay].forEach(btn => {
+        if(!btn) return;
+        btn.textContent = isMuted ? "🔇" : "🔊";
+        btn.title = isMuted ? "Unmute" : "Mute";
+      });
     }
     function setMuted(m){
       isMuted = m;
@@ -324,9 +336,12 @@
       updateMuteUI();
     }
     updateMuteUI();
-    if(muteBtn){
-      muteBtn.addEventListener('click', ()=> setMuted(!isMuted));
-    }
+
+    [muteBtn, muteBtnOverlay].forEach(btn => {
+      if(btn){
+        btn.addEventListener('click', ()=> setMuted(!isMuted));
+      }
+    });
 
     function startMusic(){
       if(!music || isMuted) return;
@@ -420,23 +435,6 @@
     }
     function hideShare(){
       if(shareBar) shareBar.style.display = "none";
-    }
-
-    // Screenshot / download image
-    if(btnShot){
-      btnShot.addEventListener('click', ()=>{
-        try{
-          const dataUrl = canvas.toDataURL("image/png");
-          const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = `cbs-christmas-score-${score}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }catch(e){
-          alert("Screenshot download is not supported in this browser.");
-        }
-      });
     }
 
     function rngGap(){
@@ -694,9 +692,14 @@
     function drawPipe(x,y,w,h,type){
       ctx.save();
       if(type === "top" && obstacleUpReady){
+        // Bovenste obstakel mag nog gewoon schalen
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else if(type === "bottom" && obstacleDownReady){
-        ctx.drawImage(obstacleDownImg, x, y, w, h);
+        // Onderste obstakel NIET vervormen: vaste aspect ratio
+        const aspect = obstacleDownImg.height / obstacleDownImg.width || 1;
+        const realH = PIPE_W * aspect;
+        // Top van de afbeelding ligt op y (gap-onderkant), hij zakt dus als geheel
+        ctx.drawImage(obstacleDownImg, x, y, PIPE_W, realH);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"rgba(255,245,220,0.98)");
@@ -858,4 +861,3 @@
   </script>
 </body>
 </html>
-
