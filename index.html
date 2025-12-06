@@ -368,22 +368,24 @@
     obstacleUpImg.onload = () => { obstacleUpReady = true; };
 
     const obstacleDownImg = new Image();
-    obstacleDownImg.src = "obstacle-down.png"; // sneeuwballen op de grond
+    obstacleDownImg.src = "obstacle-down.png"; // sneeuwballen onder
     let obstacleDownReady = false;
 
     const W = canvas.width, H = canvas.height;
 
-    // breedte van de "pipe" boven (sneeuwstorm)
+    // Breedte van de sneeuwstorm (boven) in het spel
     const PIPE_W = 64;
 
-    // echte grootte van de sneeuwballen-sprite (onder) – NIET schalen
-    let bottomSpriteWidth  = 64;
-    let bottomSpriteHeight = 64;
+    // ➜ VASTE TEKEN-GROOTTE VOOR DE SNEEUWBALLEN (onder)
+    // Niet rekken, alleen schalen mét behoud van verhouding.
+    const BOTTOM_DRAW_HEIGHT = 80;  // hoe hoger, hoe groter je sneeuwballen
+    let bottomDrawWidth  = 80;      // wordt berekend op basis van aspect ratio
 
     obstacleDownImg.onload = () => {
-      obstacleDownReady   = true;
-      bottomSpriteWidth   = obstacleDownImg.width;
-      bottomSpriteHeight  = obstacleDownImg.height;
+      obstacleDownReady = true;
+      // Aspect ratio van de sprite behouden
+      const aspect = obstacleDownImg.width / obstacleDownImg.height || 1;
+      bottomDrawWidth = BOTTOM_DRAW_HEIGHT * aspect;
     };
 
     // Physics
@@ -448,17 +450,15 @@
       if(shareBar) shareBar.style.display = "none";
     }
 
-    // Bepaal top-positie van de sneeuwstorm (boven)
+    // Bepaal top-positie van sneeuwstorm (boven) op basis van vaste gap naar onder
     function rngTop(){
-      const bottomH  = bottomSpriteHeight || 64;
-      const bottomTop = H - bottomH; // Y waar sneeuwballen beginnen (grond)
-
+      const bottomTop = H - BOTTOM_DRAW_HEIGHT;
       const minGap = PIPE_GAP_MIN;
       const maxGap = PIPE_GAP_MAX;
 
-      // we willen: gap = bottomTop - topHeight ∈ [minGap, maxGap]
-      let low  = bottomTop - maxGap; // hoogst mogelijke top (kleine gap)
-      let high = bottomTop - minGap; // laagst mogelijke top (grote gap)
+      // gap = bottomTop - topHeight ∈ [minGap, maxGap]
+      let low  = bottomTop - maxGap;
+      let high = bottomTop - minGap;
 
       const TOP_PAD = 40;
       if (low < TOP_PAD) low = TOP_PAD;
@@ -630,7 +630,7 @@
 
       for(const p of pipes){
         p.x -= speed * dtSec;
-        // alleen bovenste sneeuwstorm "bobbelt"
+        // alleen bovenste sneeuwstorm beweegt een beetje
         p.top = p.baseTop + Math.sin(timeSec * OBSTACLE_BOB_SPEED + p.phase) * OBSTACLE_BOB_AMPL;
       }
 
@@ -644,19 +644,19 @@
         }
       }
 
-      // wereldrand
+      // world bounds
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){
         return gameOver();
       }
 
-      const bottomTop = H - bottomSpriteHeight;
+      const bottomTop = H - BOTTOM_DRAW_HEIGHT;
 
       for(const p of pipes){
-        // bovenste sneeuwstorm
+        // boven: sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
 
-        // onderste sneeuwballen – exacte sprite-size op de grond
-        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, bottomTop, bottomSpriteWidth, bottomSpriteHeight)) return gameOver();
+        // onder: sneeuwballen – vaste hoogte, op de grond, niet vervormd
+        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, bottomTop, bottomDrawWidth, BOTTOM_DRAW_HEIGHT)) return gameOver();
       }
 
       draw();
@@ -687,13 +687,13 @@
       drawBG();
       drawStars();
 
-      const bottomTop = H - bottomSpriteHeight;
+      const bottomTop = H - BOTTOM_DRAW_HEIGHT;
 
       for(const p of pipes){
-        // boven: sneeuwstorm (wordt in hoogte geschaald, dat mag)
+        // Bovenste sneeuwstorm (mag rekken in hoogte)
         drawPipe(p.x, 0, PIPE_W, p.top, "top");
-        // onder: sneeuwballen – NIET vervormen, gewoon eigen sprite-grootte
-        drawPipe(p.x, bottomTop, bottomSpriteWidth, bottomSpriteHeight, "bottom");
+        // Onderste sneeuwballen – vaste grootte, op de grond
+        drawPipe(p.x, bottomTop, bottomDrawWidth, BOTTOM_DRAW_HEIGHT, "bottom");
       }
 
       drawBird(BIRD_X, birdY, BIRD_R);
@@ -721,11 +721,11 @@
     function drawPipe(x,y,w,h,type){
       ctx.save();
       if(type === "top" && obstacleUpReady){
-        // sneeuwstorm – mag geschaald worden in hoogte
+        // sneeuwstorm
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else if(type === "bottom" && obstacleDownReady){
-        // sneeuwballen – GEEN vervorming: gebruik exact spritegrootte
-        ctx.drawImage(obstacleDownImg, x, y);
+        // sneeuwballen – getekend met vaste hoogte/breedte (geen vervorming van aspect)
+        ctx.drawImage(obstacleDownImg, x, y, bottomDrawWidth, BOTTOM_DRAW_HEIGHT);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"rgba(255,245,220,0.98)");
@@ -775,13 +775,13 @@
       drawBG();
       drawStars();
 
-      const bottomTop = H - bottomSpriteHeight;
+      const bottomTop = H - BOTTOM_DRAW_HEIGHT;
 
       ctx.save();
       ctx.globalAlpha = 0.35;
       for(const p of pipes){
         drawPipe(p.x, 0, PIPE_W, p.top, "top");
-        drawPipe(p.x, bottomTop, bottomSpriteWidth, bottomSpriteHeight, "bottom");
+        drawPipe(p.x, bottomTop, bottomDrawWidth, BOTTOM_DRAW_HEIGHT, "bottom");
       }
       ctx.restore();
 
@@ -888,4 +888,3 @@
   </script>
 </body>
 </html>
-
