@@ -376,14 +376,12 @@
     // Breedte van de sneeuwstorm (boven) in het spel
     const PIPE_W = 64;
 
-    // ➜ VASTE TEKEN-GROOTTE VOOR DE SNEEUWBALLEN (onder)
-    // Niet rekken, alleen schalen mét behoud van verhouding.
-    const BOTTOM_DRAW_HEIGHT = 150;  // hoe hoger, hoe groter je sneeuwballen
-    let bottomDrawWidth  = 80;      // wordt berekend op basis van aspect ratio
+    // Onderste sneeuwballen – jouw maat die mooi is
+    const BOTTOM_DRAW_HEIGHT = 150;
+    let bottomDrawWidth  = 150;
 
     obstacleDownImg.onload = () => {
       obstacleDownReady = true;
-      // Aspect ratio van de sprite behouden
       const aspect = obstacleDownImg.width / obstacleDownImg.height || 1;
       bottomDrawWidth = BOTTOM_DRAW_HEIGHT * aspect;
     };
@@ -394,8 +392,9 @@
     const FLAP_VY = -420;
     const MAX_VY  = 640;
 
-    const PIPE_GAP_MIN = 150;
-    const PIPE_GAP_MAX = 190;
+    // ➜ Meer variatie in de hoogte van de gap
+    const PIPE_GAP_MIN = 120;
+    const PIPE_GAP_MAX = 260;
     const PIPE_SPAWN_MS = 1550;
     const SPEED_START = 130;
     const SPEED_INC   = 0.010;
@@ -450,7 +449,7 @@
       if(shareBar) shareBar.style.display = "none";
     }
 
-    // Bepaal top-positie van sneeuwstorm (boven) op basis van vaste gap naar onder
+    // Bepaal top-positie van sneeuwstorm (boven) met brede range
     function rngTop(){
       const bottomTop = H - BOTTOM_DRAW_HEIGHT;
       const minGap = PIPE_GAP_MIN;
@@ -655,7 +654,7 @@
         // boven: sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
 
-        // onder: sneeuwballen – vaste hoogte, op de grond, niet vervormd
+        // onder: sneeuwballen – vaste hoogte, op de grond
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, bottomTop, bottomDrawWidth, BOTTOM_DRAW_HEIGHT)) return gameOver();
       }
 
@@ -724,7 +723,7 @@
         // sneeuwstorm
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else if(type === "bottom" && obstacleDownReady){
-        // sneeuwballen – getekend met vaste hoogte/breedte (geen vervorming van aspect)
+        // sneeuwballen – met vaste hoogte/breedte
         ctx.drawImage(obstacleDownImg, x, y, bottomDrawWidth, BOTTOM_DRAW_HEIGHT);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
@@ -884,7 +883,7 @@
     }
     setDocVH();
     window.addEventListener('resize', setDocVH);
-    window.addEventListener('orientationchange', setDocVH);
+    window.addListener('orientationchange', setDocVH);
   </script>
 </body>
 </html>
