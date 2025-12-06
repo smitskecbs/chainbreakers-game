@@ -321,6 +321,9 @@
     const muteBtnOverlay = document.getElementById('muteBtnOverlay');
     let isMuted = false;
 
+    // timeout-handle voor "Bonus +5"
+    let bonusHintTimeout = null;
+
     function updateMuteUI(){
       [muteBtn, muteBtnOverlay].forEach(btn => {
         if(!btn) return;
@@ -439,11 +442,10 @@
     function updateShareLinks(sc){
       const url  = encodeURIComponent(window.location.href);
       const text = encodeURIComponent(
-        `I just played this CBS Christmas mini game (built by @smitske180) and scored ${sc} points! 🎄🚀 Try to beat my score:`
+        `Merry Christmas everybody! I have played the CBS mini game and scored ${sc} points! 🎄🚀 Try to beat my score:`
       );
 
       if (shareX) {
-        // X: tekst + link naar de gamepagina
         shareX.href  = `https://twitter.com/intent/tweet?text=${text}%20${url}`;
       }
       if (shareTg) {
@@ -529,6 +531,11 @@
       hideShare();
       updateHUD();
       drawIdleFrame(0);
+
+      if (bonusHintTimeout) {
+        clearTimeout(bonusHintTimeout);
+        bonusHintTimeout = null;
+      }
       if(hintBar) hintBar.textContent = "Tap / Space to start";
     }
 
@@ -693,8 +700,17 @@
           b.collected = true;
           score += BONUS_SCORE;
           updateHUD();
+
           if(hintBar){
             hintBar.textContent = `Bonus +${BONUS_SCORE}!`;
+            if(bonusHintTimeout){
+              clearTimeout(bonusHintTimeout);
+            }
+            bonusHintTimeout = setTimeout(()=>{
+              if(hintBar && hintBar.textContent.startsWith("Bonus +")){
+                hintBar.textContent = "";
+              }
+            }, 1000);
           }
         }
       }
@@ -875,7 +891,7 @@
       ctx.font = "bold 26px 'Orbitron', sans-serif";
       ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
 
-      // Subtiel: from CBS Coin (klikbaar gemaakt via canvas-click handler)
+      // Subtiel: from CBS Coin (klikbaar via canvas-click handler)
       ctx.font = "14px 'Orbitron', sans-serif";
       ctx.fillStyle = "#e3d6b0";
       ctx.fillText("from CBS Coin", cx, cy + 92);
@@ -907,6 +923,10 @@
       gameOverState = true;
       gameOverAt = performance.now();
       if(hintBar) hintBar.textContent = "";
+      if (bonusHintTimeout) {
+        clearTimeout(bonusHintTimeout);
+        bonusHintTimeout = null;
+      }
       drawGameOverFrame();
       showShare(score);
     }
@@ -920,6 +940,7 @@
       updateHUD();
       hideShare();
     }
+
     function exitPlay(){
       stopGame();
       waiting = false;
@@ -930,6 +951,12 @@
       document.body.classList.remove('play-mode');
       playOverlay.setAttribute('aria-hidden','true');
       hideShare();
+
+      if (bonusHintTimeout) {
+        clearTimeout(bonusHintTimeout);
+        bonusHintTimeout = null;
+      }
+      if(hintBar) hintBar.textContent = "";
 
       // muziek uit en resetten bij exit
       if (music) {
@@ -944,7 +971,6 @@
     function handleCanvasClick(e){
       if(!document.body.classList.contains('play-mode')) return;
 
-      // Mouse coords → canvas coords (ivm CSS scaling)
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
@@ -957,9 +983,8 @@
         const tx = cx;
         const ty = cy + 92;
 
-        // klik-zone rondom "from CBS Coin"
-        const rw = 220; // breedte
-        const rh = 28;  // hoogte
+        const rw = 220;
+        const rh = 28;
 
         if(
           x > tx - rw/2 && x < tx + rw/2 &&
@@ -970,7 +995,6 @@
         }
       }
 
-      // anders gewoon flap
       doFlap();
     }
 
@@ -1009,7 +1033,8 @@
     }
     setDocVH();
     window.addEventListener('resize', setDocVH);
-    window.addEventListener('orientationchange', setDocVH);
+    window.addListener('orientationchange', setDocVH);
   </script>
 </body>
 </html>
+
