@@ -232,7 +232,7 @@
     <div class="panel" id="howtoPanel" style="max-width:880px;">
       <h3>How to play</h3>
       <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
-      <p><b>Score +1 per gap</b>. Touch snowstorm or ground → game over.</p>
+      <p><b>Score +1 per gap</b>. Hit the snowstorm or the snowballs on the ground → game over.</p>
     </div>
 
     <!-- GAME PANEL -->
@@ -363,14 +363,20 @@
     bgImg.onload = () => { bgReady = true; };
 
     const obstacleUpImg = new Image();
-    obstacleUpImg.src = "obstacle-up.gif"; // sneeuw boven
+    obstacleUpImg.src = "obstacle-up.gif"; // sneeuwstorm van boven
     let obstacleUpReady = false;
     obstacleUpImg.onload = () => { obstacleUpReady = true; };
 
     const obstacleDownImg = new Image();
-    obstacleDownImg.src = "obstacle-down.png"; // onderkant obstakel
+    obstacleDownImg.src = "obstacle-down.png"; // sneeuwballen op de grond
     let obstacleDownReady = false;
-    obstacleDownImg.onload = () => { obstacleDownReady = true; };
+    let bottomSpriteHeight = 64; // default, wordt geupdate als image geladen is
+    obstacleDownImg.onload = () => {
+      obstacleDownReady = true;
+      // vaste hoogte op basis van sprite aspect ratio
+      const aspect = obstacleDownImg.height / obstacleDownImg.width || 1;
+      bottomSpriteHeight = 64 * aspect; // 64 = PIPE_W
+    };
 
     const W = canvas.width, H = canvas.height;
 
@@ -611,6 +617,7 @@
 
       for(const p of pipes){
         p.x -= speed * dtSec;
+        // alleen bovenste sneeuwstorm "bobbelt"
         p.top = p.baseTop + Math.sin(timeSec * OBSTACLE_BOB_SPEED + p.phase) * OBSTACLE_BOB_AMPL;
       }
 
@@ -627,14 +634,25 @@
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){
         return gameOver();
       }
+
       for(const p of pipes){
+        // top: sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
-        const y2 = p.top + p.gap;
-        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, y2, PIPE_W, H - y2)) return gameOver();
+
+        // bottom: sneeuwballen ALTlJD OP DE GROND
+        const br = getBottomRect();
+        if(circleRect(BIRD_X, birdY, BIRD_R, br.x + p.xOffset, br.y, br.w, br.h)) return gameOver();
       }
 
       draw();
       rafId = requestAnimationFrame(loop);
+    }
+
+    // helper: rect voor sneeuwballen op de grond
+    function getBottomRect(){
+      const h = bottomSpriteHeight;
+      const y = H - h;
+      return { x: 0, y, w: PIPE_W, h };
     }
 
     function circleRect(cx,cy,cr, rx,ry,rw,rh){
@@ -662,9 +680,11 @@
       drawStars();
 
       for(const p of pipes){
+        // bovenste sneeuwstorm
         drawPipe(p.x, 0, PIPE_W, p.top, "top");
-        const y2 = p.top + p.gap;
-        drawPipe(p.x, y2, PIPE_W, H - y2, "bottom");
+        // onderste sneeuwballen – altijd op de grond
+        const br = getBottomRect();
+        drawPipe(p.x, br.y, br.w, br.h, "bottom");
       }
 
       drawBird(BIRD_X, birdY, BIRD_R);
@@ -692,14 +712,11 @@
     function drawPipe(x,y,w,h,type){
       ctx.save();
       if(type === "top" && obstacleUpReady){
-        // Bovenste obstakel mag nog gewoon schalen
+        // sneeuwstorm
         ctx.drawImage(obstacleUpImg, x, y, w, h);
       }else if(type === "bottom" && obstacleDownReady){
-        // Onderste obstakel NIET vervormen: vaste aspect ratio
-        const aspect = obstacleDownImg.height / obstacleDownImg.width || 1;
-        const realH = PIPE_W * aspect;
-        // Top van de afbeelding ligt op y (gap-onderkant), hij zakt dus als geheel
-        ctx.drawImage(obstacleDownImg, x, y, PIPE_W, realH);
+        // sneeuwballen – NIET vervormen: we vertrouwen op h uit getBottomRect
+        ctx.drawImage(obstacleDownImg, x, y, w, h);
       }else{
         const g = ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"rgba(255,245,220,0.98)");
@@ -753,8 +770,8 @@
       ctx.globalAlpha = 0.35;
       for(const p of pipes){
         drawPipe(p.x, 0, PIPE_W, p.top, "top");
-        const y2 = p.top + p.gap;
-        drawPipe(p.x, y2, PIPE_W, H - y2, "bottom");
+        const br = getBottomRect();
+        drawPipe(p.x, br.y, br.w, br.h, "bottom");
       }
       ctx.restore();
 
