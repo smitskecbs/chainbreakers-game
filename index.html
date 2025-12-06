@@ -852,9 +852,9 @@
       // GEEN obstakels meer tekenen op game over
 
       const cx = W / 2;
-      const cy = H / 2 - 20;
+      const cy = H / 2 - 30;
 
-      // grote vogel bij game over
+      // grote vogel bij game over (kerstplaatje in het midden)
       if(birdReady){
         ctx.save();
         ctx.shadowColor = "rgba(255,216,107,.9)";
@@ -868,16 +868,27 @@
 
       ctx.save();
       ctx.textAlign = "center";
+
+      // Hoofdtekst: Merry Christmas
       ctx.fillStyle = "#fff7dd";
       ctx.font = "bold 26px 'Orbitron', sans-serif";
-      ctx.fillText("GAME OVER", cx, cy + 70);
+      ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
 
-      ctx.font = "bold 18px 'Orbitron', sans-serif";
-      ctx.fillText(`Score: ${score} points`, cx, cy + 100);
-
+      // Subtiel: from CBS Coin
       ctx.font = "14px 'Orbitron', sans-serif";
       ctx.fillStyle = "#e3d6b0";
-      ctx.fillText("Tap / Space to try again", cx, cy + 130);
+      ctx.fillText("from CBS Coin", cx, cy + 92);
+
+      // Score
+      ctx.font = "bold 18px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#fff7dd";
+      ctx.fillText(`Score: ${score} points`, cx, cy + 122);
+
+      // Hint om opnieuw te spelen
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#e3d6b0";
+      ctx.fillText("Tap / Space to fly again", cx, cy + 146);
+
       ctx.restore();
 
       drawFrame();
