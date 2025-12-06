@@ -41,10 +41,21 @@
       border-bottom:1px solid var(--gold-soft);
       backdrop-filter:blur(6px);
     }
-    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+    }
     .brand h1{
       margin:0; font-size:1.05rem; color:var(--gold-main);
       letter-spacing:.4px; text-shadow:0 0 12px var(--gold-glow)
+    }
+    .brand-sub{
+      font-size:0.72rem;
+      color:var(--muted);
+      letter-spacing:.12em;
+      text-transform:uppercase;
     }
 
     .btn{
@@ -213,6 +224,7 @@
   <header class="topbar">
     <div class="brand">
       <h1>Merry Christmas</h1>
+      <span class="brand-sub">A mini game by CBS Coin • cbs-coin.com</span>
     </div>
     <button id="muteBtn" class="icon-btn" title="Mute / unmute">🔊</button>
   </header>
@@ -234,6 +246,12 @@
       <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
       <p><b>Score +1 per gap</b>. Hit the snowstorm above, the ice blocks on the ground, or the floor → game over.</p>
       <p>Grab the <b>gifts</b> (present, candy cane, gingerbread) for <b>extra bonus points</b> 🎁.</p>
+      <p class="muted" style="font-size:0.8rem;margin-top:0.4rem;">
+        This Christmas mini game is part of the CBS Coin world – discover more at
+        <a href="https://cbs-coin.com" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+          cbs-coin.com
+        </a>.
+      </p>
     </div>
 
     <!-- GAME PANEL -->
@@ -242,6 +260,17 @@
         <div id="canvasHome" style="display:grid;place-items:center">
           <canvas id="board" width="360" height="540"></canvas>
         </div>
+        <p class="muted" style="text-align:center;margin-top:10px;font-size:0.8rem;">
+          A little Christmas gift from
+          <a href="https://cbs-coin.com" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+            cbs-coin.com
+          </a>
+          • built by
+          <a href="https://x.com/smitske180" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+            @smitske180
+          </a>
+          🎄
+        </p>
       </div>
     </div>
   </main>
@@ -321,7 +350,7 @@
     const muteBtnOverlay = document.getElementById('muteBtnOverlay');
     let isMuted = false;
 
-    // timeout-handle voor "Bonus +5"
+    // timeout-handle voor kerst-tekst bij bonus
     let bonusHintTimeout = null;
 
     function updateMuteUI(){
@@ -418,6 +447,15 @@
     const BONUS_SCORE  = 5;
     const BONUS_CHANCE = 0.45; // kans per pijp
 
+    // Teksten voor bij bonus
+    const BONUS_MESSAGES = [
+      "Ho Ho Ho! 🎅",
+      "Merry Christmas! 🎄",
+      "Nice catch! 🎁",
+      "Festive bonus! ✨",
+      "Santa approves! 🛷"
+    ];
+
     // Vallende sterren
     const STAR_SPAWN_RATE = 1.2;
     const STAR_MIN_SPEED  = 140;
@@ -442,7 +480,7 @@
     function updateShareLinks(sc){
       const url  = encodeURIComponent(window.location.href);
       const text = encodeURIComponent(
-        `Merry Christmas everybody! I have played the CBS mini game and scored ${sc} points! 🎄🚀 Try to beat my score:`
+        `Merry Christmas everybody! I have played the CBS mini game and scored ${sc} points! 🎄🚀 Try to beat my score at https://cbs-coin.com`
       );
 
       if (shareX) {
@@ -702,12 +740,14 @@
           updateHUD();
 
           if(hintBar){
-            hintBar.textContent = `Bonus +${BONUS_SCORE}!`;
+            // random kerst-tekst
+            const msg = BONUS_MESSAGES[Math.floor(Math.random() * BONUS_MESSAGES.length)];
+            hintBar.textContent = msg;
             if(bonusHintTimeout){
               clearTimeout(bonusHintTimeout);
             }
             bonusHintTimeout = setTimeout(()=>{
-              if(hintBar && hintBar.textContent.startsWith("Bonus +")){
+              if(hintBar){
                 hintBar.textContent = "";
               }
             }, 1000);
@@ -1033,8 +1073,7 @@
     }
     setDocVH();
     window.addEventListener('resize', setDocVH);
-    window.addListener('orientationchange', setDocVH);
+    window.addEventListener('orientationchange', setDocVH);
   </script>
 </body>
 </html>
-
