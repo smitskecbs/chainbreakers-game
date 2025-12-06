@@ -352,6 +352,20 @@
       }
     }
 
+    // Muziek pauze/stop buiten de site
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && music) {
+        music.pause();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (music) {
+        music.pause();
+        music.currentTime = 0;
+      }
+    });
+
     // Sprites
     const birdImg = new Image();
     birdImg.src = "bird.png"; // kerstman met slee
@@ -835,26 +849,21 @@
       drawBG();
       drawStars();
 
-      ctx.save();
-      ctx.globalAlpha = 0.35;
-      for(const p of pipes){
-        drawTopPipe(p.x, 0, PIPE_W, p.top);
-        drawBottomIceBlock(p.x, p.bottomTop, PIPE_W, p.bottomH);
-      }
-      ctx.restore();
+      // GEEN obstakels meer tekenen op game over
 
       const cx = W / 2;
-      const cy = H / 2 - 30;
+      const cy = H / 2 - 20;
 
+      // grote vogel bij game over
       if(birdReady){
         ctx.save();
         ctx.shadowColor = "rgba(255,216,107,.9)";
-        ctx.shadowBlur = 28;
-        const size = BIRD_R * 9.0;
+        ctx.shadowBlur = 32;
+        const size = BIRD_R * 12.0; // extra groot
         ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
         ctx.restore();
       }else{
-        drawBird(cx, cy, BIRD_R * 2.5);
+        drawBird(cx, cy, BIRD_R * 3);
       }
 
       ctx.save();
@@ -909,6 +918,12 @@
       document.body.classList.remove('play-mode');
       playOverlay.setAttribute('aria-hidden','true');
       hideShare();
+
+      // muziek uit en resetten bij exit
+      if (music) {
+        music.pause();
+        music.currentTime = 0;
+      }
     }
 
     function doFlap(){ flap(); startMusic(); }
