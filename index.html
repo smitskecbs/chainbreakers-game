@@ -177,7 +177,6 @@
     @media (max-width: 460px){ .tbtn{ min-width:96px; } }
 
     body.play-mode header,
-    body.play-mode #controlsPanel,
     body.play-mode main { display:none; }
     body.play-mode .play-overlay{ display:flex; }
 
@@ -339,23 +338,14 @@
       </p>
     </div>
 
-    <!-- START BUTTON DIRECT BOVEN GAME -->
-    <div id="controlsPanel" class="panel" style="max-width:520px; text-align:center; margin-top:0;">
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button id="startBtn" class="btn">▶️ Start</button>
-      </div>
-      <p class="muted" style="margin:.5rem 0;font-size:0.8rem;">
-        Controls: tap / click / Space to flap • Esc to exit.
-      </p>
-    </div>
-
-    <!-- GAME PANEL -->
+    <!-- GEEN STARTKNOP MEER, ALLEEN GAMEPANEEL -->
     <div id="gamePanel" class="panel">
       <div class="card">
-        <div id="canvasHome" style="display:grid;place-items:center">
+        <div id="canvasHome" style="display:grid;place-items:center;cursor:pointer;">
           <canvas id="board" width="360" height="540"></canvas>
         </div>
         <p class="muted" style="text-align:center;margin-top:10px;font-size:0.8rem;">
+          Tap the game field to start 🎄<br/>
           A little Christmas gift from
           <a href="https://cbs-coin.com" target="_blank" style="color:var(--gold-main);text-decoration:none;">
             cbs-coin.com
@@ -364,7 +354,6 @@
           <a href="https://x.com/smitske180" target="_blank" style="color:var(--gold-main);text-decoration:none;">
             @smitske180
           </a>
-          🎄
         </p>
       </div>
     </div>
@@ -450,7 +439,6 @@
     const hudBar = document.getElementById('hudBar');
     const hintBar= document.getElementById('hintBar');
     const exitBtn= document.getElementById('exitBtn');
-    const startBtn= document.getElementById('startBtn');
     const canvasHome = document.getElementById('canvasHome');
     const playOverlay= document.getElementById('playOverlay');
     const playStage  = document.getElementById('playStage');
@@ -587,23 +575,25 @@
     let gameOverAt = 0;
 
     function updateShareLinks(sc){
-      const url  = encodeURIComponent(window.location.href);
+      const gameUrl = "https://smitskecbs.github.io/chainbreakers-game/";
       const text = encodeURIComponent(
-        `🎅 Merry Christmas! I have played the CBS mini game and scored ${sc} points! 🎄🚀 Try to reach the top of the global leaderboard and break the high score.
-Play now:https://smitskecbs.github.io/chainbreakers-game/
+        "🎄 Merry Christmas! I scored " + sc +
+        " points in the CBS Xmas mini game. " +
+        "Try to reach the top of the global leaderboard and beat my score!\n" +
+        "Play now: " + gameUrl
       );
 
       if (shareX) {
-        shareX.href  = `https://twitter.com/intent/tweet?text=${text}%20${url}`;
+        shareX.href  = "https://twitter.com/intent/tweet?text=" + text;
       }
       if (shareTg) {
-        shareTg.href = `https://t.me/share/url?url=${url}&text=${text}`;
+        shareTg.href = "https://t.me/share/url?url=" + encodeURIComponent(gameUrl) + "&text=" + text;
       }
       if (shareWa) {
-        shareWa.href = `https://wa.me/?text=${text}%20${url}`;
+        shareWa.href = "https://wa.me/?text=" + text;
       }
       if (shareFb) {
-        shareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+        shareFb.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(gameUrl);
       }
     }
     function showShare(sc){
@@ -989,11 +979,12 @@ Play now:https://smitskecbs.github.io/chainbreakers-game/
     }
 
     function gameOver(){
+      if (gameOverState) return;
       running = false;
       gameOverState = true;
       gameOverAt = performance.now();
 
-      if(hintBar) hintBar.textContent = "";
+      if(hintBar) hintBar.textContent = "Game over! Saving your score…";
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
@@ -1001,14 +992,15 @@ Play now:https://smitskecbs.github.io/chainbreakers-game/
 
       window.currentGameScore = score;
 
-      // fullscreen uit, terug naar de pagina
-      exitPlay();
-
-      // share + scoreboard
-      showShare(score);
-      if (window.handleGameOverForLeaderboard) {
-        window.handleGameOverForLeaderboard(score);
-      }
+      // 5 seconden wachten voordat we uit fullscreen gaan en naar scoreboard + share
+      setTimeout(() => {
+        if (!gameOverState) return;
+        exitPlay();
+        showShare(score);
+        if (window.handleGameOverForLeaderboard) {
+          window.handleGameOverForLeaderboard(score);
+        }
+      }, 5000);
     }
 
     function enterPlay(){
@@ -1045,14 +1037,16 @@ Play now:https://smitskecbs.github.io/chainbreakers-game/
     }
 
     function handleCanvasClick(e){
-      if(!document.body.classList.contains('play-mode')) return;
+      // Als we nog NIET in play-mode zijn → canvas is startknop
+      if(!document.body.classList.contains('play-mode')){
+        enterPlay();
+        prepareGame();
+        startMusic();
+        doFlap(); // direct eerste flap / start
+        return;
+      }
 
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
-
+      // Tijdens het spelen gewoon flappen
       doFlap();
     }
 
@@ -1061,7 +1055,7 @@ Play now:https://smitskecbs.github.io/chainbreakers-game/
     btnFlap.addEventListener('click', (e)=>{ e.preventDefault(); doFlap(); }, {passive:false});
 
     canvas.addEventListener('pointerup', (e)=>{ 
-      if(document.body.classList.contains('play-mode')) handleCanvasClick(e); 
+      handleCanvasClick(e);
     }, {passive:true});
 
     window.addEventListener('keydown', (e)=>{
@@ -1073,12 +1067,10 @@ Play now:https://smitskecbs.github.io/chainbreakers-game/
       }
     });
 
-    startBtn.addEventListener('click', ()=>{
-      enterPlay();
-      prepareGame();
-      startMusic();
+    exitBtn.addEventListener('click', ()=> {
+      gameOverState = false;
+      exitPlay();
     });
-    exitBtn.addEventListener('click', ()=> exitPlay());
 
     (function init(){ prepareGame(); })();
   </script>
