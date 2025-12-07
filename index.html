@@ -309,6 +309,62 @@
       cursor:pointer;
       white-space:nowrap;
     }
+
+    /* AUTH STYLES */
+    #authPanel{
+      margin-bottom:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,216,107,.25);
+      background:radial-gradient(circle at top,rgba(255,248,212,.03),rgba(0,0,0,.8));
+      font-size:0.8rem;
+    }
+    #authStatus{
+      margin:0 0 6px;
+      color:var(--muted);
+    }
+    .auth-buttons{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:6px;
+    }
+    .auth-btn{
+      border-radius:999px;
+      border:1px solid rgba(255,216,107,.4);
+      background:linear-gradient(180deg,#3b2605,#2b1a03);
+      color:#ffeec4;
+      padding:6px 10px;
+      font-size:0.78rem;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
+    }
+    .auth-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 0 16px var(--gold-glow);
+    }
+    .auth-email{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:6px;
+    }
+    .auth-email input{
+      flex:1;
+      min-width:0;
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid rgba(255,216,107,.35);
+      background:rgba(3,5,10,.9);
+      color:var(--fg);
+      font-size:0.78rem;
+    }
+    .auth-note{
+      font-size:0.72rem;
+      color:var(--muted);
+      margin:2px 0 0;
+    }
   </style>
 </head>
 <body>
@@ -361,6 +417,24 @@
     <!-- GLOBAL LEADERBOARD PANEL -->
     <div id="leaderboardPanel" class="panel" style="max-width:880px;">
       <h3>Global Top 10 – Xmas Scores</h3>
+
+      <!-- AUTH PANEEL -->
+      <div id="authPanel">
+        <p id="authStatus">Not signed in. Login to auto-save scores with your email.</p>
+        <div class="auth-buttons">
+          <button id="btnLoginGoogle" type="button" class="auth-btn">Sign in with Google</button>
+          <button id="btnLoginApple" type="button" class="auth-btn">Sign in with Apple / iCloud</button>
+          <button id="btnLogout" type="button" class="auth-btn" style="display:none;">Sign out</button>
+        </div>
+        <div class="auth-email">
+          <input id="authEmail" type="email" placeholder="Or enter email for magic link (Supabase)" />
+          <button id="btnLoginEmail" type="button" class="auth-btn">Send login link</button>
+        </div>
+        <p class="auth-note">
+          When logged in, your email will be used automatically for the leaderboard.
+        </p>
+      </div>
+
       <div id="leaderboardCurrent">
         Current score this session: <span id="leaderboardCurrentScore">0</span>
       </div>
@@ -372,8 +446,8 @@
         <input
           id="leaderboardName"
           type="text"
-          maxlength="20"
-          placeholder="Naam / nickname (geen wallet nodig)"
+          maxlength="50"
+          placeholder="Naam / nickname (of email als je bent ingelogd)"
           required
         />
         <button type="submit">Save score</button>
@@ -456,6 +530,7 @@
     let isMuted = false;
 
     let bonusHintTimeout = null;
+    let countdownInterval = null;
 
     function updateMuteUI(){
       [muteBtn, muteBtnOverlay].forEach(btn => {
@@ -572,7 +647,6 @@
     let timeSec = 0;
     let waiting = false, idleRaf = null;
     let gameOverState = false;
-    let gameOverAt = 0;
 
     function updateShareLinks(sc){
       const gameUrl = "https://smitskecbs.github.io/chainbreakers-game/";
@@ -672,6 +746,10 @@
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
       }
       if(hintBar) hintBar.textContent = "Tap / Space to start";
     }
@@ -972,8 +1050,8 @@
       ctx.restore();
     }
 
-    // --- KERSTKAART GAME OVER ---
-    function drawGameOverFrame(){
+    // --- KERSTKAART GAME OVER MET AFTEL ---
+    function drawGameOverFrame(remaining){
       ctx.clearRect(0,0,W,H);
       drawBG();
       drawStars();
@@ -981,7 +1059,6 @@
       const cx = W / 2;
       const cy = H / 2 - 30;
 
-      // grote kerstman / slee
       if(birdReady){
         ctx.save();
         ctx.shadowColor = "rgba(255,216,107,.9)";
@@ -1010,7 +1087,12 @@
 
       ctx.font = "14px 'Orbitron', sans-serif";
       ctx.fillStyle = "#e3d6b0";
-      ctx.fillText("Scoreboard & share below the game", cx, cy + 146);
+      ctx.fillText("Leaderboard & share will open below.", cx, cy + 146);
+
+      const rem = typeof remaining === "number" ? remaining : 0;
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#ffd86b";
+      ctx.fillText("Opening scoreboard in " + rem + "s…", cx, cy + 170);
 
       ctx.restore();
 
@@ -1027,20 +1109,34 @@
       if (gameOverState) return;
       running = false;
       gameOverState = true;
-      gameOverAt = performance.now();
 
       if(hintBar) hintBar.textContent = "";
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
       }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
 
       window.currentGameScore = score;
 
-      // kerstkaart tekenen in fullscreen
-      drawGameOverFrame();
+      let remaining = 5;
+      drawGameOverFrame(remaining);
 
-      // 5 seconden wachten, dan uit fullscreen + share + leaderboard
+      countdownInterval = setInterval(()=>{
+        remaining--;
+        if(remaining < 0){
+          remaining = 0;
+        }
+        drawGameOverFrame(remaining);
+        if(remaining <= 0){
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+      }, 1000);
+
       setTimeout(() => {
         if (!gameOverState) return;
         exitPlay();
@@ -1076,6 +1172,10 @@
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
       }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
       if(hintBar) hintBar.textContent = "";
 
       if (music) {
@@ -1087,16 +1187,13 @@
     }
 
     function handleCanvasClick(e){
-      // Als we nog NIET in play-mode zijn → canvas is startknop
       if(!document.body.classList.contains('play-mode')){
         enterPlay();
         prepareGame();
         startMusic();
-        doFlap(); // eerste flap meteen
+        doFlap();
         return;
       }
-
-      // Tijdens het spelen gewoon flappen
       doFlap();
     }
 
@@ -1125,7 +1222,7 @@
     (function init(){ prepareGame(); })();
   </script>
 
-  <!-- Supabase client + leaderboard script -->
+  <!-- Supabase client + leaderboard + auth -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
   <script>
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
@@ -1138,7 +1235,17 @@
     const lbNameEl = document.getElementById("leaderboardName");
     const lbCurrentScoreEl = document.getElementById("leaderboardCurrentScore");
 
+    const authPanelEl = document.getElementById("authPanel");
+    const authStatusEl = document.getElementById("authStatus");
+    const btnLoginGoogle = document.getElementById("btnLoginGoogle");
+    const btnLoginApple  = document.getElementById("btnLoginApple");
+    const btnLogout      = document.getElementById("btnLogout");
+    const authEmailInput = document.getElementById("authEmail");
+    const btnLoginEmail  = document.getElementById("btnLoginEmail");
+
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUserEmail = null;
 
     function showLbError(msg){
       if(!lbErrorEl) return;
@@ -1149,6 +1256,113 @@
       if(!lbErrorEl) return;
       lbErrorEl.textContent = "";
       lbErrorEl.style.display = "none";
+    }
+
+    function updateAuthUI(user){
+      if(user){
+        currentUserEmail = user.email || null;
+        if(authStatusEl){
+          authStatusEl.textContent = "Logged in as " + currentUserEmail + ". Your email will be used for the leaderboard.";
+        }
+        if(btnLogout) btnLogout.style.display = "inline-flex";
+        if(btnLoginGoogle) btnLoginGoogle.style.display = "none";
+        if(btnLoginApple)  btnLoginApple.style.display  = "none";
+        if(btnLoginEmail)  btnLoginEmail.style.display  = "none";
+        if(authEmailInput){
+          authEmailInput.style.display = "none";
+        }
+        if(lbNameEl){
+          lbNameEl.value = currentUserEmail;
+          lbNameEl.readOnly = true;
+          lbNameEl.placeholder = "Email from login (used for leaderboard)";
+        }
+      }else{
+        currentUserEmail = null;
+        if(authStatusEl){
+          authStatusEl.textContent = "Not signed in. Login to auto-save scores with your email.";
+        }
+        if(btnLogout) btnLogout.style.display = "none";
+        if(btnLoginGoogle) btnLoginGoogle.style.display = "inline-flex";
+        if(btnLoginApple)  btnLoginApple.style.display  = "inline-flex";
+        if(btnLoginEmail)  btnLoginEmail.style.display  = "inline-flex";
+        if(authEmailInput){
+          authEmailInput.style.display = "inline-block";
+        }
+        if(lbNameEl){
+          lbNameEl.readOnly = false;
+          lbNameEl.value = "";
+          lbNameEl.placeholder = "Naam / nickname (geen wallet nodig)";
+        }
+      }
+    }
+
+    async function initAuth(){
+      const { data } = await supa.auth.getUser();
+      updateAuthUI(data && data.user ? data.user : null);
+
+      supa.auth.onAuthStateChange((_event, session) => {
+        updateAuthUI(session && session.user ? session.user : null);
+      });
+    }
+
+    if(btnLoginGoogle){
+      btnLoginGoogle.addEventListener("click", async () => {
+        try{
+          const { error } = await supa.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: window.location.href }
+          });
+          if(error) console.error(error);
+        }catch(err){
+          console.error(err);
+        }
+      });
+    }
+
+    if(btnLoginApple){
+      btnLoginApple.addEventListener("click", async () => {
+        try{
+          const { error } = await supa.auth.signInWithOAuth({
+            provider: "apple",
+            options: { redirectTo: window.location.href }
+          });
+          if(error) console.error(error);
+        }catch(err){
+          console.error(err);
+        }
+      });
+    }
+
+    if(btnLoginEmail){
+      btnLoginEmail.addEventListener("click", async () => {
+        const email = (authEmailInput && authEmailInput.value.trim()) || "";
+        if(!email) return;
+        try{
+          const { error } = await supa.auth.signInWithOtp({
+            email,
+            options: { emailRedirectTo: window.location.href }
+          });
+          if(error){
+            console.error(error);
+            showLbError("Kon magic link niet versturen. Check Supabase settings.");
+          }else{
+            showLbError("Magic link verstuurd. Check je e-mail en kom daarna terug naar deze pagina.");
+          }
+        }catch(err){
+          console.error(err);
+        }
+      });
+    }
+
+    if(btnLogout){
+      btnLogout.addEventListener("click", async () => {
+        try{
+          await supa.auth.signOut();
+          updateAuthUI(null);
+        }catch(err){
+          console.error(err);
+        }
+      });
     }
 
     async function loadLeaderboard(){
@@ -1189,6 +1403,22 @@
       });
     }
 
+    async function saveScore(name, sc){
+      clearLbError();
+      const { error } = await supa
+        .from(TABLE_NAME)
+        .insert({ name, score: sc });
+
+      if(error){
+        console.error(error);
+        showLbError("Kon score niet opslaan. Probeer later opnieuw.");
+        return false;
+      }
+
+      await loadLeaderboard();
+      return true;
+    }
+
     lbFormEl.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearLbError();
@@ -1204,38 +1434,34 @@
         return;
       }
 
-      const { error } = await supa
-        .from(TABLE_NAME)
-        .insert({ name, score: sc });
-
-      if(error){
-        console.error(error);
-        showLbError("Kon score niet opslaan. Probeer later opnieuw.");
-        return;
-      }
-
-      lbNameEl.value = "";
-      await loadLeaderboard();
+      await saveScore(name, sc);
+      lbNameEl.value = currentUserEmail ? currentUserEmail : "";
     });
 
-    // wordt door de game aangeroepen zodra je af bent
-    window.handleGameOverForLeaderboard = function(score){
+    window.handleGameOverForLeaderboard = async function(score){
       if (lbCurrentScoreEl) {
         lbCurrentScoreEl.textContent = score;
       }
       if (score <= 0) return;
+
+      if (currentUserEmail) {
+        await saveScore(currentUserEmail, score);
+      }
 
       const panel = document.getElementById("leaderboardPanel");
       if (panel && panel.scrollIntoView) {
         panel.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
-      if (lbNameEl) {
+      if (!currentUserEmail && lbNameEl) {
         lbNameEl.focus();
       }
     };
 
-    loadLeaderboard();
+    (async function initAll(){
+      await initAuth();
+      await loadLeaderboard();
+    })();
   </script>
 
   <!-- Mobiele 100vh fix -->
