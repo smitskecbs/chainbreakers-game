@@ -116,6 +116,9 @@
 
     .muted{color:var(--muted)}
 
+    .play-overlay}{
+      position:fixed; inset:0; z-index:50; display:none;
+    }
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
@@ -310,60 +313,71 @@
       white-space:nowrap;
     }
 
-    /* AUTH STYLES */
-    #authPanel{
-      margin-bottom:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,216,107,.25);
-      background:radial-gradient(circle at top,rgba(255,248,212,.03),rgba(0,0,0,.8));
-      font-size:0.8rem;
-    }
-    #authStatus{
-      margin:0 0 6px;
-      color:var(--muted);
-    }
-    .auth-buttons{
+    /* --- AUTH BOX --- */
+    .auth-box{
       display:flex;
       flex-wrap:wrap;
       gap:8px;
-      margin-bottom:6px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:8px;
+      font-size:0.8rem;
+    }
+    .auth-status{
+      flex:1;
+      color:var(--muted);
+      min-width:160px;
     }
     .auth-btn{
       border-radius:999px;
-      border:1px solid rgba(255,216,107,.4);
-      background:linear-gradient(180deg,#3b2605,#2b1a03);
-      color:#ffeec4;
-      padding:6px 10px;
-      font-size:0.78rem;
+      border:none;
+      padding:6px 12px;
+      font-size:0.75rem;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
       font-weight:700;
+      background:linear-gradient(135deg,var(--btnA),var(--btnB));
+      color:#3a2600;
+      box-shadow:0 0 10px rgba(255,216,107,.6);
       cursor:pointer;
-      box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
+      white-space:nowrap;
     }
-    .auth-btn:hover{
-      transform:translateY(-1px);
-      box-shadow:0 0 16px var(--gold-glow);
-    }
-    .auth-email{
+
+    /* --- GAME OVER CARD --- */
+    .gameover-card{
+      position:absolute;
+      inset:0;
       display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      margin-bottom:6px;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(0,0,0,0.78);
+      backdrop-filter:blur(4px);
+      text-align:center;
     }
-    .auth-email input{
-      flex:1;
-      min-width:0;
-      padding:6px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,216,107,.35);
-      background:rgba(3,5,10,.9);
-      color:var(--fg);
-      font-size:0.78rem;
+    .gameover-inner{
+      max-width:340px;
+      background:linear-gradient(180deg,#05070f,#04040c);
+      border-radius:16px;
+      border:1px solid var(--gold-main);
+      box-shadow:0 22px 48px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,216,107,.25);
+      padding:16px 18px 14px;
     }
-    .auth-note{
-      font-size:0.72rem;
+    .gameover-title{
+      margin:0 0 6px;
+      font-size:1.1rem;
+      color:var(--gold-main);
+      text-shadow:0 0 12px var(--gold-glow);
+    }
+    .gameover-score{
+      margin:6px 0;
+      font-size:0.9rem;
+    }
+    .gameover-countdown{
+      margin:6px 0 0;
+      font-size:0.8rem;
       color:var(--muted);
-      margin:2px 0 0;
     }
   </style>
 </head>
@@ -394,7 +408,7 @@
       </p>
     </div>
 
-    <!-- GAMEPANEEL – canvas is startknop -->
+    <!-- GAME PANEL (canvas is startknop) -->
     <div id="gamePanel" class="panel">
       <div class="card">
         <div id="canvasHome" style="display:grid;place-items:center;cursor:pointer;">
@@ -416,25 +430,19 @@
 
     <!-- GLOBAL LEADERBOARD PANEL -->
     <div id="leaderboardPanel" class="panel" style="max-width:880px;">
-      <h3>Global Top 10 – Xmas Scores</h3>
 
-      <!-- AUTH PANEEL -->
-      <div id="authPanel">
-        <p id="authStatus">Not signed in. Login to auto-save scores with your email.</p>
-        <div class="auth-buttons">
-          <button id="btnLoginGoogle" type="button" class="auth-btn">Sign in with Google</button>
-          <button id="btnLoginApple" type="button" class="auth-btn">Sign in with Apple / iCloud</button>
-          <button id="btnLogout" type="button" class="auth-btn" style="display:none;">Sign out</button>
+      <!-- AUTH BOX -->
+      <div class="auth-box">
+        <div id="authStatus" class="auth-status">
+          Not signed in – you can still use a nickname for the high score.
         </div>
-        <div class="auth-email">
-          <input id="authEmail" type="email" placeholder="Or enter email for magic link (Supabase)" />
-          <button id="btnLoginEmail" type="button" class="auth-btn">Send login link</button>
+        <div>
+          <button id="loginBtn" class="auth-btn">Sign in with Google</button>
+          <button id="logoutBtn" class="auth-btn" style="display:none;">Sign out</button>
         </div>
-        <p class="auth-note">
-          When logged in, your email will be used automatically for the leaderboard.
-        </p>
       </div>
 
+      <h3>Global Top 10 – Xmas Scores</h3>
       <div id="leaderboardCurrent">
         Current score this session: <span id="leaderboardCurrentScore">0</span>
       </div>
@@ -446,8 +454,8 @@
         <input
           id="leaderboardName"
           type="text"
-          maxlength="50"
-          placeholder="Naam / nickname (of email als je bent ingelogd)"
+          maxlength="40"
+          placeholder="Name / nickname (no wallet needed)"
           required
         />
         <button type="submit">Save score</button>
@@ -479,6 +487,22 @@
       >
         🔊
       </button>
+
+      <!-- Game over kerstkaart met aftel-timer -->
+      <div id="gameOverCard" class="gameover-card" style="display:none;">
+        <div class="gameover-inner">
+          <h2 class="gameover-title">Merry Christmas 🎄</h2>
+          <p class="gameover-score">
+            Your score: <span id="gameOverScore">0</span> points
+          </p>
+          <p class="gameover-countdown" id="gameOverCountdown">
+            Saving your score… returning to the leaderboard in 5 seconds.
+          </p>
+          <p class="gameover-countdown" style="margin-top:8px;">
+            After that you can enter your name or nickname and see the global top 10.
+          </p>
+        </div>
+      </div>
 
       <div id="playStage"></div>
     </div>
@@ -529,8 +553,12 @@
     const muteBtnOverlay = document.getElementById('muteBtnOverlay');
     let isMuted = false;
 
+    const gameOverCard = document.getElementById('gameOverCard');
+    const gameOverScoreEl = document.getElementById('gameOverScore');
+    const gameOverCountdownEl = document.getElementById('gameOverCountdown');
+    let gameOverCountdownTimer = null;
+
     let bonusHintTimeout = null;
-    let countdownInterval = null;
 
     function updateMuteUI(){
       [muteBtn, muteBtnOverlay].forEach(btn => {
@@ -725,6 +753,16 @@
       ctx.restore();
     }
 
+    function hideGameOverCard(){
+      if(gameOverCard){
+        gameOverCard.style.display = "none";
+      }
+      if(gameOverCountdownTimer){
+        clearInterval(gameOverCountdownTimer);
+        gameOverCountdownTimer = null;
+      }
+    }
+
     function resetCore(){
       birdY = H / 2;
       birdVy = 0;
@@ -740,16 +778,13 @@
       starSpawnAcc = 0;
       gameOverState = false;
       hideShare();
+      hideGameOverCard();
       updateHUD();
       drawIdleFrame(0);
 
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
       }
       if(hintBar) hintBar.textContent = "Tap / Space to start";
     }
@@ -781,6 +816,7 @@
       last = 0;
       if(hintBar) hintBar.textContent = "";
       hideShare();
+      hideGameOverCard();
       rafId = requestAnimationFrame(loop);
     }
 
@@ -1050,55 +1086,6 @@
       ctx.restore();
     }
 
-    // --- KERSTKAART GAME OVER MET AFTEL ---
-    function drawGameOverFrame(remaining){
-      ctx.clearRect(0,0,W,H);
-      drawBG();
-      drawStars();
-
-      const cx = W / 2;
-      const cy = H / 2 - 30;
-
-      if(birdReady){
-        ctx.save();
-        ctx.shadowColor = "rgba(255,216,107,.9)";
-        ctx.shadowBlur = 32;
-        const size = BIRD_R * 12.0;
-        ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
-        ctx.restore();
-      }else{
-        drawBird(cx, cy, BIRD_R * 3);
-      }
-
-      ctx.save();
-      ctx.textAlign = "center";
-
-      ctx.fillStyle = "#fff7dd";
-      ctx.font = "bold 26px 'Orbitron', sans-serif";
-      ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
-
-      ctx.font = "14px 'Orbitron', sans-serif";
-      ctx.fillStyle = "#e3d6b0";
-      ctx.fillText("from CBS Coin", cx, cy + 92);
-
-      ctx.font = "bold 18px 'Orbitron', sans-serif";
-      ctx.fillStyle = "#fff7dd";
-      ctx.fillText("Score: " + score + " points", cx, cy + 122);
-
-      ctx.font = "14px 'Orbitron', sans-serif";
-      ctx.fillStyle = "#e3d6b0";
-      ctx.fillText("Leaderboard & share will open below.", cx, cy + 146);
-
-      const rem = typeof remaining === "number" ? remaining : 0;
-      ctx.font = "14px 'Orbitron', sans-serif";
-      ctx.fillStyle = "#ffd86b";
-      ctx.fillText("Opening scoreboard in " + rem + "s…", cx, cy + 170);
-
-      ctx.restore();
-
-      drawFrame();
-    }
-
     function stopGame(){
       running = false;
       if(rafId) cancelAnimationFrame(rafId);
@@ -1110,41 +1097,48 @@
       running = false;
       gameOverState = true;
 
-      if(hintBar) hintBar.textContent = "";
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
 
       window.currentGameScore = score;
 
-      let remaining = 5;
-      drawGameOverFrame(remaining);
+      // kerstkaart + aftel
+      if(gameOverCard && gameOverScoreEl && gameOverCountdownEl){
+        gameOverScoreEl.textContent = score;
+        let remaining = 5;
+        gameOverCountdownEl.textContent =
+          "Saving your score… returning to the leaderboard in " + remaining + " seconds.";
+        gameOverCard.style.display = "flex";
 
-      countdownInterval = setInterval(()=>{
-        remaining--;
-        if(remaining < 0){
-          remaining = 0;
+        if(gameOverCountdownTimer){
+          clearInterval(gameOverCountdownTimer);
         }
-        drawGameOverFrame(remaining);
-        if(remaining <= 0){
-          clearInterval(countdownInterval);
-          countdownInterval = null;
-        }
-      }, 1000);
-
-      setTimeout(() => {
-        if (!gameOverState) return;
+        gameOverCountdownTimer = setInterval(() => {
+          remaining--;
+          if(remaining <= 0){
+            clearInterval(gameOverCountdownTimer);
+            gameOverCountdownTimer = null;
+            // terug naar pagina + leaderboard
+            exitPlay();
+            showShare(score);
+            if (window.handleGameOverForLeaderboard) {
+              window.handleGameOverForLeaderboard(score);
+            }
+          } else {
+            gameOverCountdownEl.textContent =
+              "Saving your score… returning to the leaderboard in " + remaining + " seconds.";
+          }
+        }, 1000);
+      } else {
+        // fallback
         exitPlay();
         showShare(score);
         if (window.handleGameOverForLeaderboard) {
           window.handleGameOverForLeaderboard(score);
         }
-      }, 5000);
+      }
     }
 
     function enterPlay(){
@@ -1155,6 +1149,7 @@
       playOverlay.setAttribute('aria-hidden','false');
       updateHUD();
       hideShare();
+      hideGameOverCard();
     }
 
     function exitPlay(){
@@ -1167,14 +1162,12 @@
       document.body.classList.remove('play-mode');
       playOverlay.setAttribute('aria-hidden','true');
       hideShare();
+      hideGameOverCard();
+      gameOverState = false;
 
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
       }
       if(hintBar) hintBar.textContent = "";
 
@@ -1182,18 +1175,19 @@
         music.pause();
         music.currentTime = 0;
       }
-
-      gameOverState = false;
     }
 
     function handleCanvasClick(e){
+      // Als we nog NIET in play-mode zijn → canvas is startknop
       if(!document.body.classList.contains('play-mode')){
         enterPlay();
         prepareGame();
         startMusic();
-        doFlap();
+        doFlap(); // eerste flap
         return;
       }
+
+      // Tijdens spelen gewoon flappen
       doFlap();
     }
 
@@ -1215,14 +1209,13 @@
     });
 
     exitBtn.addEventListener('click', ()=> {
-      gameOverState = false;
       exitPlay();
     });
 
     (function init(){ prepareGame(); })();
   </script>
 
-  <!-- Supabase client + leaderboard + auth -->
+  <!-- Supabase client + leaderboard + Google login -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
   <script>
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
@@ -1235,17 +1228,11 @@
     const lbNameEl = document.getElementById("leaderboardName");
     const lbCurrentScoreEl = document.getElementById("leaderboardCurrentScore");
 
-    const authPanelEl = document.getElementById("authPanel");
     const authStatusEl = document.getElementById("authStatus");
-    const btnLoginGoogle = document.getElementById("btnLoginGoogle");
-    const btnLoginApple  = document.getElementById("btnLoginApple");
-    const btnLogout      = document.getElementById("btnLogout");
-    const authEmailInput = document.getElementById("authEmail");
-    const btnLoginEmail  = document.getElementById("btnLoginEmail");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUserEmail = null;
 
     function showLbError(msg){
       if(!lbErrorEl) return;
@@ -1256,113 +1243,6 @@
       if(!lbErrorEl) return;
       lbErrorEl.textContent = "";
       lbErrorEl.style.display = "none";
-    }
-
-    function updateAuthUI(user){
-      if(user){
-        currentUserEmail = user.email || null;
-        if(authStatusEl){
-          authStatusEl.textContent = "Logged in as " + currentUserEmail + ". Your email will be used for the leaderboard.";
-        }
-        if(btnLogout) btnLogout.style.display = "inline-flex";
-        if(btnLoginGoogle) btnLoginGoogle.style.display = "none";
-        if(btnLoginApple)  btnLoginApple.style.display  = "none";
-        if(btnLoginEmail)  btnLoginEmail.style.display  = "none";
-        if(authEmailInput){
-          authEmailInput.style.display = "none";
-        }
-        if(lbNameEl){
-          lbNameEl.value = currentUserEmail;
-          lbNameEl.readOnly = true;
-          lbNameEl.placeholder = "Email from login (used for leaderboard)";
-        }
-      }else{
-        currentUserEmail = null;
-        if(authStatusEl){
-          authStatusEl.textContent = "Not signed in. Login to auto-save scores with your email.";
-        }
-        if(btnLogout) btnLogout.style.display = "none";
-        if(btnLoginGoogle) btnLoginGoogle.style.display = "inline-flex";
-        if(btnLoginApple)  btnLoginApple.style.display  = "inline-flex";
-        if(btnLoginEmail)  btnLoginEmail.style.display  = "inline-flex";
-        if(authEmailInput){
-          authEmailInput.style.display = "inline-block";
-        }
-        if(lbNameEl){
-          lbNameEl.readOnly = false;
-          lbNameEl.value = "";
-          lbNameEl.placeholder = "Naam / nickname (geen wallet nodig)";
-        }
-      }
-    }
-
-    async function initAuth(){
-      const { data } = await supa.auth.getUser();
-      updateAuthUI(data && data.user ? data.user : null);
-
-      supa.auth.onAuthStateChange((_event, session) => {
-        updateAuthUI(session && session.user ? session.user : null);
-      });
-    }
-
-    if(btnLoginGoogle){
-      btnLoginGoogle.addEventListener("click", async () => {
-        try{
-          const { error } = await supa.auth.signInWithOAuth({
-            provider: "google",
-            options: { redirectTo: window.location.href }
-          });
-          if(error) console.error(error);
-        }catch(err){
-          console.error(err);
-        }
-      });
-    }
-
-    if(btnLoginApple){
-      btnLoginApple.addEventListener("click", async () => {
-        try{
-          const { error } = await supa.auth.signInWithOAuth({
-            provider: "apple",
-            options: { redirectTo: window.location.href }
-          });
-          if(error) console.error(error);
-        }catch(err){
-          console.error(err);
-        }
-      });
-    }
-
-    if(btnLoginEmail){
-      btnLoginEmail.addEventListener("click", async () => {
-        const email = (authEmailInput && authEmailInput.value.trim()) || "";
-        if(!email) return;
-        try{
-          const { error } = await supa.auth.signInWithOtp({
-            email,
-            options: { emailRedirectTo: window.location.href }
-          });
-          if(error){
-            console.error(error);
-            showLbError("Kon magic link niet versturen. Check Supabase settings.");
-          }else{
-            showLbError("Magic link verstuurd. Check je e-mail en kom daarna terug naar deze pagina.");
-          }
-        }catch(err){
-          console.error(err);
-        }
-      });
-    }
-
-    if(btnLogout){
-      btnLogout.addEventListener("click", async () => {
-        try{
-          await supa.auth.signOut();
-          updateAuthUI(null);
-        }catch(err){
-          console.error(err);
-        }
-      });
     }
 
     async function loadLeaderboard(){
@@ -1403,27 +1283,11 @@
       });
     }
 
-    async function saveScore(name, sc){
-      clearLbError();
-      const { error } = await supa
-        .from(TABLE_NAME)
-        .insert({ name, score: sc });
-
-      if(error){
-        console.error(error);
-        showLbError("Kon score niet opslaan. Probeer later opnieuw.");
-        return false;
-      }
-
-      await loadLeaderboard();
-      return true;
-    }
-
     lbFormEl.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearLbError();
 
-      const name = lbNameEl.value.trim();
+      let name = lbNameEl.value.trim();
       const sc = typeof window.currentGameScore === "number" ? window.currentGameScore : 0;
 
       if(!name){
@@ -1434,32 +1298,91 @@
         return;
       }
 
-      await saveScore(name, sc);
-      lbNameEl.value = currentUserEmail ? currentUserEmail : "";
+      const { error } = await supa
+        .from(TABLE_NAME)
+        .insert({ name, score: sc });
+
+      if(error){
+        console.error(error);
+        showLbError("Kon score niet opslaan. Probeer later opnieuw.");
+        return;
+      }
+
+      lbNameEl.value = lbNameEl.disabled ? lbNameEl.value : "";
+      await loadLeaderboard();
     });
 
-    window.handleGameOverForLeaderboard = async function(score){
+    // wordt door de game aangeroepen zodra je af bent
+    window.handleGameOverForLeaderboard = function(score){
       if (lbCurrentScoreEl) {
         lbCurrentScoreEl.textContent = score;
       }
       if (score <= 0) return;
-
-      if (currentUserEmail) {
-        await saveScore(currentUserEmail, score);
-      }
 
       const panel = document.getElementById("leaderboardPanel");
       if (panel && panel.scrollIntoView) {
         panel.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
-      if (!currentUserEmail && lbNameEl) {
+      if (lbNameEl && !lbNameEl.disabled) {
         lbNameEl.focus();
       }
     };
 
-    (async function initAll(){
-      await initAuth();
+    // ------- GOOGLE LOGIN --------
+    function updateAuthUI(session){
+      if(!authStatusEl || !loginBtn || !logoutBtn || !lbNameEl) return;
+
+      if(!session){
+        authStatusEl.textContent =
+          "Not signed in – you can still use a nickname for the high score.";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        lbNameEl.disabled = false;
+        lbNameEl.placeholder = "Name / nickname (no wallet needed)";
+        if(!lbNameEl.value){
+          lbNameEl.value = "";
+        }
+        return;
+      }
+
+      const email = (session.user && session.user.email) || "";
+      authStatusEl.textContent =
+        "Signed in as " + email + " – your email will be used for the high score name.";
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+
+      lbNameEl.disabled = false; // laten staan maar auto-invullen
+      lbNameEl.value = email;
+      lbNameEl.placeholder = "Saving as " + email;
+    }
+
+    async function refreshSession(){
+      const { data, error } = await supa.auth.getSession();
+      if(error){
+        console.error(error);
+      }
+      updateAuthUI(data ? data.session : null);
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      const gameUrl = "https://smitskecbs.github.io/chainbreakers-game/";
+      await supa.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: gameUrl
+        }
+      });
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await supa.auth.signOut();
+      updateAuthUI(null);
+    });
+
+    // Init
+    (async function initSupabase(){
+      await refreshSession();
       await loadLeaderboard();
     })();
   </script>
