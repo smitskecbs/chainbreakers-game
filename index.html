@@ -324,16 +324,6 @@
     <button id="muteBtn" class="icon-btn" title="Mute / unmute">🔊</button>
   </header>
 
-  <!-- Controls -->
-  <div id="controlsPanel" class="panel" style="max-width:880px; text-align:center">
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button id="startBtn" class="btn">▶️ Start</button>
-    </div>
-    <p class="muted" style="margin:.5rem 0">
-      Controls: click/tap/Space to flap • Esc to exit.
-    </p>
-  </div>
-
   <main class="container">
     <!-- HOW TO PLAY -->
     <div class="panel" id="howtoPanel" style="max-width:880px;">
@@ -346,6 +336,16 @@
         <a href="https://cbs-coin.com" target="_blank" style="color:var(--gold-main);text-decoration:none;">
           cbs-coin.com
         </a>.
+      </p>
+    </div>
+
+    <!-- START BUTTON DIRECT BOVEN GAME -->
+    <div id="controlsPanel" class="panel" style="max-width:520px; text-align:center; margin-top:0;">
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button id="startBtn" class="btn">▶️ Start</button>
+      </div>
+      <p class="muted" style="margin:.5rem 0;font-size:0.8rem;">
+        Controls: tap / click / Space to flap • Esc to exit.
       </p>
     </div>
 
@@ -389,6 +389,15 @@
         />
         <button type="submit">Save score</button>
       </form>
+
+      <!-- SHARE BAR NA GAME OVER -->
+      <div id="shareBar" class="share-bar">
+        <span class="share-label">Share your score:</span>
+        <a id="shareX"  class="share-btn" href="#" target="_blank" rel="noopener noreferrer">X</a>
+        <a id="shareTg" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a id="shareWa" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a id="shareFb" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+      </div>
     </div>
   </main>
 
@@ -413,15 +422,6 @@
 
     <div class="controls">
       <button class="tbtn" id="btnFlap">FLAP</button>
-    </div>
-
-    <!-- SHARE BAR ON GAME OVER -->
-    <div id="shareBar" class="share-bar">
-      <span class="share-label">Share your score:</span>
-      <a id="shareX"  class="share-btn" href="#" target="_blank" rel="noopener noreferrer">X</a>
-      <a id="shareTg" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
-      <a id="shareWa" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-      <a id="shareFb" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
     </div>
 
     <button id="exitBtn" class="btn">⏹ Exit</button>
@@ -755,18 +755,6 @@
     }
 
     function flap(){
-      if(gameOverState){
-        const now = performance.now();
-        if(now - gameOverAt < 1500) return;
-        gameOverState = false;
-        resetCore();
-        addPipe();
-        running = true;
-        if(hintBar) hintBar.textContent = "";
-        rafId = requestAnimationFrame(loop);
-        return;
-      }
-
       if(waiting){
         startLoopFromFirstFlap();
         return;
@@ -1015,7 +1003,8 @@
       // fullscreen uit, terug naar de pagina
       exitPlay();
 
-      // direct naar scoreboard + naamveld
+      // share + scoreboard
+      showShare(score);
       if (window.handleGameOverForLeaderboard) {
         window.handleGameOverForLeaderboard(score);
       }
