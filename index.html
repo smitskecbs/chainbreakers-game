@@ -1,275 +1,1079 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>CBS Xmas – Global Top 10</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Merry Christmas – Mini Game</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
+
   <style>
     :root{
-      --bg:#02040a;
-      --card:#05070f;
-      --fg:#fffaf0;
-      --muted:#d2c9aa;
-      --accent:#ffd86b;
-      --accent-strong:#ffcc33;
-      --shadow:0 18px 40px rgba(0,0,0,.6);
-      --radius:16px;
+      --bg1:#02040a; --bg2:#05040f;
+      --card:#05070f; --card2:#05040a;
+      --fg:#fffaf0; --muted:#d2c9aa;
+      --line:rgba(255,216,107,.24);
+      --shadow:0 20px 45px rgba(255,216,107,.12), inset 0 0 0 1px rgba(255,216,107,.18);
+      --radius:18px;
+      --btnA:#ffefb0; --btnB:#e2b542;
+      --vh: 1vh;
+      --gold-main:#ffd86b;
+      --gold-strong:#ffcc33;
+      --gold-soft:rgba(255,216,107,.4);
+      --gold-glow:rgba(255,216,107,.9);
     }
-    *{box-sizing:border-box;margin:0;padding:0}
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      min-height:100vh;
-      background:radial-gradient(circle at top,#171927 0,#02040a 55%);
-      color:var(--fg);
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(255,216,107,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(255,140,80,.12), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+    }
+
+    header.topbar{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.8rem 1rem;
+      background:linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      border-bottom:1px solid var(--gold-soft);
+      backdrop-filter:blur(6px);
+    }
+    .brand{
       display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+    }
+    .brand h1{
+      margin:0; font-size:1.05rem; color:var(--gold-main);
+      letter-spacing:.4px; text-shadow:0 0 12px var(--gold-glow)
+    }
+    .brand-sub{
+      font-size:0.72rem;
+      color:var(--muted);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:120px; padding:12px 18px; border-radius:10px;
+      text-decoration:none; font-weight:900; font-size:.94rem;
+      color:#3a2600; background:linear-gradient(180deg, var(--btnA), var(--btnB));
+      border:1px solid var(--gold-main);
+      box-shadow:0 0 16px var(--gold-glow), 0 0 32px rgba(255,216,107,.4), inset 0 -6px 12px rgba(0,0,0,.22);
+      cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 22px var(--gold-glow) }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; filter:saturate(.7) }
+
+    .icon-btn{
+      min-width:auto;
+      padding:6px 10px;
+      font-size:0.9rem;
+      border-radius:999px;
+      background:linear-gradient(180deg,#3b2605,#2b1a03);
+      color:#ffeec4;
+      border:1px solid var(--gold-main);
+      box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
+      cursor:pointer;
+    }
+    .icon-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 0 16px var(--gold-glow);
+    }
+
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+    .panel{
+      background:radial-gradient(circle at top left, rgba(255,216,107,.12), transparent 55%),
+                 radial-gradient(circle at bottom right, rgba(255,160,90,.16), transparent 60%),
+                 linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px; margin:16px auto;
+      box-shadow:var(--shadow);
+    }
+
+    #gamePanel { max-width:520px; }
+
+    #gamePanel .card{
+      background:linear-gradient(180deg,#05070f,#04040c);
+      border:1px solid var(--gold-soft);
+      border-radius:16px; padding:12px;
+      box-shadow:inset 0 0 0 1px rgba(255,216,107,.16), 0 10px 22px rgba(0,0,0,.6);
+    }
+
+    canvas{
+      display:block; margin:0 auto;
+      background:#05090d; border-radius:12px; border:1px solid var(--gold-soft);
+      box-shadow: inset 0 0 0 1px rgba(255,216,107,.18);
+      touch-action:none;
+    }
+    #board{ width:100%; max-width:360px; height:auto; }
+
+    .muted{color:var(--muted)}
+
+    .play-overlay{
+      position:fixed; inset:0; z-index:50; display:none;
+      background:
+        radial-gradient(70% 60% at 50% 0%, rgba(255,216,107,.18), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.8), rgba(0,0,0,.9));
+      align-items:center; justify-content:center; flex-direction:column; gap:12px;
+      touch-action:none;
+      padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px);
+      min-height: calc(var(--vh) * 100);
+    }
+    .play-overlay .stage{
+      width: min(92vw, 520px);
+      max-width: 520px;
+      max-height: calc(var(--vh) * 100 - 190px);
+      display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg,#05070f,#04040c);
+      border:1px solid var(--gold-main);
+      border-radius:16px; padding:10px;
+      box-shadow:0 22px 48px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,216,107,.25);
+      overflow:hidden; position:relative;
+    }
+    .play-overlay .stage canvas{
+      width:100%; height:auto;
+      max-height: calc(var(--vh) * 100 - 230px);
+      border-radius:12px; border:1px solid var(--gold-soft);
+      box-shadow:0 0 18px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,216,107,.18);
+    }
+
+    .hudbar{
+      position:absolute; top:10px; left:10px; z-index:5;
+      pointer-events:none; background:rgba(10,5,0,.75);
+      border:1px solid var(--gold-main); border-radius:10px;
+      padding:6px 10px; font-weight:700;
+      text-shadow:0 0 10px var(--gold-glow);
+      box-shadow:0 0 12px rgba(0,0,0,.8);
+    }
+    .hintbar{
+      position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+      background:rgba(10,5,0,.78); border:1px solid var(--gold-main);
+      border-radius:10px; padding:6px 10px; font-weight:700; color:#fff8dc;
+      text-shadow:0 0 10px var(--gold-glow);
+      box-shadow:0 0 14px rgba(0,0,0,.85);
+    }
+
+    .controls{
+      display:flex; gap:8px; width:min(92vw,520px);
+      justify-content:center; flex-wrap:wrap;
+    }
+    .tbtn{
+      min-width:110px; min-height:52px; padding:12px 16px;
+      border-radius:12px; border:1px solid var(--gold-main);
+      background:linear-gradient(180deg,#3b2605,#2b1a03); color:#ffeec4;
+      font-weight:900; font-size:18px;
+      box-shadow:0 10px 22px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,216,107,.25);
+      touch-action:none;
+    }
+    .tbtn:active{ transform:translateY(1px); }
+
+    @media (max-width: 460px){ .tbtn{ min-width:96px; } }
+
+    body.play-mode header,
+    body.play-mode #controlsPanel,
+    body.play-mode main { display:none; }
+    body.play-mode .play-overlay{ display:flex; }
+
+    #howtoPanel h3{ margin-top:0 }
+
+    .share-bar{
+      display:none;
+      margin-top:8px;
+      gap:8px;
+      flex-wrap:wrap;
       align-items:center;
       justify-content:center;
-      padding:24px;
     }
-    .card{
-      width:100%;
-      max-width:480px;
-      background:linear-gradient(145deg,rgba(8,10,20,.94),rgba(2,4,10,.98));
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      border:1px solid rgba(255,216,107,.25);
-      padding:22px 22px 18px;
-      position:relative;
-      overflow:hidden;
-    }
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background:radial-gradient(circle at 0 0,rgba(255,216,107,.18),transparent 55%);
-      opacity:.9;
-      pointer-events:none;
-    }
-    .header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:16px;
-      position:relative;
-      z-index:1;
-    }
-    .title{
-      font-family:"Orbitron",system-ui;
-      font-size:20px;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      color:var(--accent);
-      text-shadow:0 0 14px rgba(255,216,107,.65);
-    }
-    .subtitle{
-      font-size:11px;
+    .share-label{
+      font-size:0.8rem;
       color:var(--muted);
-      opacity:.9;
+      margin-right:4px;
     }
-    .badge{
-      font-size:10px;
-      text-transform:uppercase;
-      letter-letter-spacing:0.12em;
+    .share-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
       padding:6px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,216,107,.45);
-      background:linear-gradient(120deg,rgba(255,216,107,.18),rgba(12,10,3,.9));
-      box-shadow:0 0 10px rgba(255,216,107,.3);
-      color:var(--accent-strong);
-      font-weight:600;
-    }
-    .list{
-      margin-top:4px;
-      border-radius:12px;
-      border:1px solid rgba(255,216,107,.18);
-      background:radial-gradient(circle at top,rgba(255,248,212,.02),rgba(0,0,0,.7));
-      overflow:hidden;
-      position:relative;
-      z-index:1;
-    }
-    .row{
-      display:flex;
-      align-items:center;
-      padding:8px 12px;
-      font-size:13px;
-    }
-    .row:nth-child(odd){
-      background:rgba(0,0,0,.16);
-    }
-    .pos{
-      width:24px;
-      font-family:"Orbitron",monospace;
-      font-size:11px;
-      opacity:.85;
-      color:var(--accent);
-    }
-    .name{
-      flex:1;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      opacity:.95;
-    }
-    .score{
-      font-family:"Orbitron",monospace;
-      font-size:12px;
-      color:#fff;
-    }
-    .empty{
-      padding:12px;
-      font-size:12px;
-      text-align:center;
-      color:var(--muted);
-    }
-    .error{
-      padding:10px 12px;
-      font-size:11px;
-      color:#ff9a9a;
-      background:rgba(100,0,0,.6);
-      border-top:1px solid rgba(255,100,100,.4);
-      text-align:center;
-    }
-    .form{
-      margin-top:14px;
-      display:flex;
-      gap:8px;
-      position:relative;
-    }
-    .form input{
-      flex:1;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,216,107,.35);
-      background:rgba(3,5,10,.9);
-      color:var(--fg);
-      font-size:13px;
-    }
-    .form button{
-      border-radius:999px;
-      border:none;
-      padding:8px 14px;
-      font-size:12px;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      font-weight:600;
-      background:linear-gradient(135deg,var(--accent),var(--accent-strong));
-      box-shadow:0 0 12px rgba(255,216,107,.7);
+      font-size:0.8rem;
+      font-weight:700;
+      text-decoration:none;
+      border:1px solid var(--gold-main);
+      background:linear-gradient(180deg,#392507,#251503);
+      color:#ffeec4;
+      box-shadow:0 6px 14px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,216,107,.25);
       cursor:pointer;
-      color:#201600;
+    }
+    .share-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 0 18px var(--gold-glow);
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="header">
-      <div>
-        <div class="title">Top 10</div>
-        <div class="subtitle">CBS Xmas – global high scores</div>
-      </div>
-      <div class="badge">CBS</div>
+  <!-- kerst muziek -->
+  <audio id="bgMusic" src="christmas.mp3" loop preload="auto"></audio>
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>Merry Christmas</h1>
+      <span class="brand-sub">A mini game by CBS Coin • cbs-coin.com</span>
     </div>
+    <button id="muteBtn" class="icon-btn" title="Mute / unmute">🔊</button>
+  </header>
 
-    <div id="list" class="list">
-      <div class="empty">Scores laden…</div>
+  <!-- Controls -->
+  <div id="controlsPanel" class="panel" style="max-width:880px; text-align:center">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="startBtn" class="btn">▶️ Start</button>
     </div>
-
-    <div id="errorBox" class="error" style="display:none;"></div>
-
-    <form id="scoreForm" class="form">
-      <input id="nameInput" type="text" maxlength="20" placeholder="Naam / Wallet / Nickname" required />
-      <button type="submit">Save</button>
-    </form>
+    <p class="muted" style="margin:.5rem 0">
+      Controls: click/tap/Space to flap • Esc to exit.
+    </p>
   </div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
+  <main class="container">
+    <!-- HOW TO PLAY -->
+    <div class="panel" id="howtoPanel" style="max-width:880px;">
+      <h3>How to play</h3>
+      <p>Tap, click or press Space to flap and guide Santa's sleigh through the winter sky.</p>
+      <p><b>Score +1 per gap</b>. Hit the snowstorm above, the ice blocks on the ground, or the floor → game over.</p>
+      <p>Grab the <b>gifts</b> (present, candy cane, gingerbread) for <b>extra bonus points</b> 🎁.</p>
+      <p class="muted" style="font-size:0.8rem;margin-top:0.4rem;">
+        This Christmas mini game is part of the CBS Coin world – discover more at
+        <a href="https://cbs-coin.com" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+          cbs-coin.com
+        </a>.
+      </p>
+    </div>
+
+    <!-- GAME PANEL -->
+    <div id="gamePanel" class="panel">
+      <div class="card">
+        <div id="canvasHome" style="display:grid;place-items:center">
+          <canvas id="board" width="360" height="540"></canvas>
+        </div>
+        <p class="muted" style="text-align:center;margin-top:10px;font-size:0.8rem;">
+          A little Christmas gift from
+          <a href="https://cbs-coin.com" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+            cbs-coin.com
+          </a>
+          • built by
+          <a href="https://x.com/smitske180" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+            @smitske180
+          </a>
+          🎄
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Fullscreen Play -->
+  <div id="playOverlay" class="play-overlay" aria-hidden="true">
+    <div class="stage">
+      <div class="hudbar" id="hudBar">Score 0</div>
+      <div class="hintbar" id="hintBar">Tap / Space to start</div>
+
+      <!-- Mute knop in speelveld -->
+      <button
+        id="muteBtnOverlay"
+        class="icon-btn"
+        title="Mute / unmute"
+        style="position:absolute;top:10px;right:10px;z-index:6;"
+      >
+        🔊
+      </button>
+
+      <div id="playStage"></div>
+    </div>
+
+    <div class="controls">
+      <button class="tbtn" id="btnFlap">FLAP</button>
+    </div>
+
+    <!-- SHARE BAR ON GAME OVER -->
+    <div id="shareBar" class="share-bar">
+      <span class="share-label">Share your score:</span>
+      <a id="shareX"  class="share-btn" href="#" target="_blank" rel="noopener noreferrer">X</a>
+      <a id="shareTg" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
+      <a id="shareWa" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a id="shareFb" class="share-btn" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+    </div>
+
+    <button id="exitBtn" class="btn">⏹ Exit</button>
+
+    <!-- subtiele footer link -->
+    <div style="
+      position:absolute;
+      bottom:6px;
+      right:8px;
+      font-size:10px;
+      opacity:0.45;
+      color:#ffe7b8;
+      font-family:'Orbitron', sans-serif;
+      pointer-events:auto;
+    ">
+      <a href="https://cbs-coin.com" target="_blank" style="color:#ffe7b8; text-decoration:none;">
+        cbs-coin.com
+      </a>
+    </div>
+  </div>
+
+  <!-- Flappy Game JS -->
   <script>
-    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI"; // ← zelf invullen
-    const TABLE_NAME = "leaderboard";
+    const canvas = document.getElementById('board');
+    const ctx    = canvas.getContext('2d');
+    const hudBar = document.getElementById('hudBar');
+    const hintBar= document.getElementById('hintBar');
+    const exitBtn= document.getElementById('exitBtn');
+    const startBtn= document.getElementById('startBtn');
+    const canvasHome = document.getElementById('canvasHome');
+    const playOverlay= document.getElementById('playOverlay');
+    const playStage  = document.getElementById('playStage');
+    const btnFlap = document.getElementById('btnFlap');
 
-    // Score komt uit URL (bijv. leaderboard.html?score=123)
-    let CURRENT_SCORE = 0;
-    const params = new URLSearchParams(window.location.search);
-    const urlScore = parseInt(params.get("score"), 10);
-    if (!isNaN(urlScore)) CURRENT_SCORE = urlScore;
+    const shareBar  = document.getElementById('shareBar');
+    const shareX    = document.getElementById('shareX');
+    const shareTg   = document.getElementById('shareTg');
+    const shareWa   = document.getElementById('shareWa');
+    const shareFb   = document.getElementById('shareFb');
 
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const music   = document.getElementById('bgMusic');
+    const muteBtn = document.getElementById('muteBtn');
+    const muteBtnOverlay = document.getElementById('muteBtnOverlay');
+    let isMuted = false;
 
-    const listEl = document.getElementById("list");
-    const formEl = document.getElementById("scoreForm");
-    const nameInput = document.getElementById("nameInput");
-    const errorBox = document.getElementById("errorBox");
+    // timeout-handle voor kerst-tekst bij bonus
+    let bonusHintTimeout = null;
 
-    function showError(msg){
-      errorBox.textContent = msg;
-      errorBox.style.display = "block";
-    }
-    function clearError(){
-      errorBox.textContent = "";
-      errorBox.style.display = "none";
-    }
-
-    async function loadScores(){
-      clearError();
-      listEl.innerHTML = '<div class="empty">Scores laden…</div>';
-
-      const { data, error } = await client
-        .from(TABLE_NAME)
-        .select("*")
-        .order("score", { ascending: false })
-        .limit(10);
-
-      if (error){
-        showError("Kon scoreboard niet laden.");
-        return;
-      }
-
-      listEl.innerHTML = "";
-
-      if (!data.length){
-        listEl.innerHTML = '<div class="empty">Nog geen scores 🎄</div>';
-        return;
-      }
-
-      data.forEach((row, index) => {
-        const el = document.createElement("div");
-        el.className = "row";
-        el.innerHTML = `
-          <div class="pos">${String(index+1).padStart(2, "0")}</div>
-          <div class="name">${row.name}</div>
-          <div class="score">${row.score}</div>
-        `;
-        listEl.appendChild(el);
+    function updateMuteUI(){
+      [muteBtn, muteBtnOverlay].forEach(btn => {
+        if(!btn) return;
+        btn.textContent = isMuted ? "🔇" : "🔊";
+        btn.title = isMuted ? "Unmute" : "Mute";
       });
     }
-
-    formEl.addEventListener("submit", async e => {
-      e.preventDefault();
-      clearError();
-
-      const name = nameInput.value.trim();
-      if (!name) return;
-
-      if (isNaN(CURRENT_SCORE)){
-        showError("Geen geldige score.");
-        return;
+    function setMuted(m){
+      isMuted = m;
+      if(music){
+        music.muted = m;
+        if(m) music.pause();
       }
+      updateMuteUI();
+    }
+    updateMuteUI();
 
-      const { error } = await client
-        .from(TABLE_NAME)
-        .insert({ name, score: CURRENT_SCORE });
-
-      if (error){
-        showError("Kon score niet opslaan.");
-        return;
+    [muteBtn, muteBtnOverlay].forEach(btn => {
+      if(btn){
+        btn.addEventListener('click', ()=> setMuted(!isMuted));
       }
-
-      nameInput.value = "";
-      loadScores();
     });
 
-    loadScores();
+    function startMusic(){
+      if(!music || isMuted) return;
+      music.volume = 0.35;
+      if(music.paused){
+        music.play().catch(()=>{});
+      }
+    }
+
+    // Muziek pauze/stop buiten de site
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && music) {
+        music.pause();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (music) {
+        music.pause();
+        music.currentTime = 0;
+      }
+    });
+
+    // Sprites
+    const birdImg = new Image();
+    birdImg.src = "bird.png"; // kerstman met slee
+    let birdReady = false;
+    birdImg.onload = () => { birdReady = true; };
+
+    const bgImg = new Image();
+    bgImg.src = "background.png"; // kerstlandschap
+    let bgReady = false;
+    bgImg.onload = () => { bgReady = true; };
+
+    const obstacleUpImg = new Image();
+    obstacleUpImg.src = "obstacle-up.gif"; // sneeuwstorm boven
+    let obstacleUpReady = false;
+    obstacleUpImg.onload = () => { obstacleUpReady = true; };
+
+    // Bonus sprites: present, candy cane, gingerbread
+    const bonusSpriteSources = ["bonus.png", "bonus1.png", "bonus2.png"];
+    const bonusImgs = bonusSpriteSources.map(src => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+
+    const W = canvas.width, H = canvas.height;
+
+    // Obstakel maten
+    const PIPE_W = 64;                // breedte van pijp / sneeuwstorm
+    const BOTTOM_MIN_H = 110;         // minimale hoogte ijsblok
+    const BOTTOM_MAX_H = 210;         // maximale hoogte ijsblok
+
+    const GAP_MIN = 140;              // minimum opening
+    const GAP_MAX = 230;              // maximum opening
+
+    // Physics
+    const BIRD_X = Math.floor(W * 0.28), BIRD_R = 12;
+    const GRAVITY = 1400;
+    const FLAP_VY = -420;
+    const MAX_VY  = 640;
+
+    const PIPE_SPAWN_MS = 1550;
+    const SPEED_START = 130;
+    const SPEED_INC   = 0.010;
+
+    // Bonus settings
+    const BONUS_RADIUS = 18;
+    const BONUS_SCORE  = 5;
+    const BONUS_CHANCE = 0.45; // kans per pijp
+
+    // Teksten voor bij bonus
+    const BONUS_MESSAGES = [
+      "Ho Ho Ho! 🎅",
+      "Merry Christmas! 🎄",
+      "Nice catch! 🎁",
+      "Festive bonus! ✨",
+      "Santa approves! 🛷"
+    ];
+
+    // Vallende sterren
+    const STAR_SPAWN_RATE = 1.2;
+    const STAR_MIN_SPEED  = 140;
+    const STAR_MAX_SPEED  = 240;
+    const STAR_MIN_SIZE   = 1.5;
+    const STAR_MAX_SIZE   = 3.2;
+    let stars = [];
+    let starSpawnAcc = 0;
+
+    let birdY = H / 2, birdVy = 0;
+    let pipes = [];
+    let bonuses = [];
+    let score = 0;
+    let running = false, rafId = null;
+    let last = 0, spawnT = 0, speed = SPEED_START;
+    let timeSec = 0;
+    let waiting = false, idleRaf = null;
+    let gameOverState = false;
+    let gameOverAt = 0;
+
+    // ----- SHARE HELPERS -----
+    function updateShareLinks(sc){
+      const url  = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(
+        `Merry Christmas everybody! I have played the CBS mini game and scored ${sc} points! 🎄🚀 Try to beat my score at https://cbs-coin.com`
+      );
+
+      if (shareX) {
+        shareX.href  = `https://twitter.com/intent/tweet?text=${text}%20${url}`;
+      }
+      if (shareTg) {
+        shareTg.href = `https://t.me/share/url?url=${url}&text=${text}`;
+      }
+      if (shareWa) {
+        shareWa.href = `https://wa.me/?text=${text}%20${url}`;
+      }
+      if (shareFb) {
+        shareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      }
+    }
+    function showShare(sc){
+      updateShareLinks(sc);
+      if(shareBar) shareBar.style.display = "flex";
+    }
+    function hideShare(){
+      if(shareBar) shareBar.style.display = "none";
+    }
+
+    // ---- STARS ----
+    function spawnStar(){
+      const x = Math.random() * W;
+      const y = -20 - Math.random() * 60;
+      const speed = STAR_MIN_SPEED + Math.random() * (STAR_MAX_SPEED - STAR_MIN_SPEED);
+      const angle = Math.PI / 2 + (Math.random() * 0.4 - 0.2);
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+      const size = STAR_MIN_SIZE + Math.random() * (STAR_MAX_SIZE - STAR_MIN_SIZE);
+      const alpha = 0.45 + Math.random() * 0.4;
+      stars.push({x,y,vx,vy,size,alpha});
+    }
+    function updateStars(dtSec){
+      starSpawnAcc += dtSec * STAR_SPAWN_RATE;
+      while(starSpawnAcc >= 1){
+        spawnStar();
+        starSpawnAcc -= 1;
+      }
+      stars.forEach(s => {
+        s.x += s.vx * dtSec;
+        s.y += s.vy * dtSec;
+      });
+      stars = stars.filter(s => s.y < H + 40 && s.x > -60 && s.x < W + 60);
+    }
+    function drawStars(){
+      if (!stars.length) return;
+      ctx.save();
+      ctx.lineWidth = 1.3;
+      ctx.lineCap = "round";
+      for(const s of stars){
+        const trail = s.size * 4;
+        const len = Math.hypot(s.vx, s.vy) || 1;
+        const dx = -s.vx / len;
+        const dy = -s.vy / len;
+        const x2 = s.x + dx * trail;
+        const y2 = s.y + dy * trail;
+        const grd = ctx.createLinearGradient(x2,y2,s.x,s.y);
+        grd.addColorStop(0, "rgba(255,255,255,0)");
+        grd.addColorStop(1, `rgba(255,255,255,${s.alpha})`);
+        ctx.strokeStyle = grd;
+        ctx.beginPath();
+        ctx.moveTo(x2,y2);
+        ctx.lineTo(s.x,s.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ---- CORE RESET ----
+    function resetCore(){
+      birdY = H / 2;
+      birdVy = 0;
+      pipes = [];
+      bonuses = [];
+      score = 0;
+      speed = SPEED_START;
+      last = 0;
+      spawnT = 0;
+      timeSec = 0;
+      stars = [];
+      starSpawnAcc = 0;
+      gameOverState = false;
+      hideShare();
+      updateHUD();
+      drawIdleFrame(0);
+
+      if (bonusHintTimeout) {
+        clearTimeout(bonusHintTimeout);
+        bonusHintTimeout = null;
+      }
+      if(hintBar) hintBar.textContent = "Tap / Space to start";
+    }
+
+    function prepareGame(){
+      stopGame();
+      waiting = true;
+      resetCore();
+      idleStep(performance.now());
+    }
+
+    function idleStep(ts){
+      if(!waiting) return;
+      const t = ts * 0.004;
+      updateStars(0.016);
+      drawIdleFrame(Math.sin(t) * 2);
+      idleRaf = requestAnimationFrame(idleStep);
+    }
+
+    function startLoopFromFirstFlap(){
+      waiting = false;
+      if(idleRaf){ cancelAnimationFrame(idleRaf); idleRaf = null; }
+      pipes = [];
+      bonuses = [];
+      spawnT = 0;
+      addPipe();
+      birdVy = FLAP_VY;
+      running = true;
+      last = 0;
+      if(hintBar) hintBar.textContent = "";
+      hideShare();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    // ---- PIPE / BONUS SPAWN ----
+    function addPipe(){
+      // Random hoogte onder
+      const bottomH = BOTTOM_MIN_H + Math.random() * (BOTTOM_MAX_H - BOTTOM_MIN_H);
+      const bottomTop = H - bottomH;
+
+      // Random gap hoogte
+      const gap = GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
+      let top = bottomTop - gap;
+
+      const TOP_PAD = 40;
+      if(top < TOP_PAD){
+        top = TOP_PAD;
+      }
+
+      const p = {
+        x: W + 6,
+        top,
+        bottomTop,
+        bottomH,
+        passed: false
+      };
+      pipes.push(p);
+
+      // Kans op cadeautje in de gap
+      if(Math.random() < BONUS_CHANCE){
+        const gapTop = top + 20;
+        const gapBottom = bottomTop - 20;
+
+        if(gapBottom - gapTop > 60){
+          const by = gapTop + Math.random() * (gapBottom - gapTop);
+          const bx = p.x + PIPE_W + 40;
+          bonuses.push({
+            x: bx,
+            y: by,
+            r: BONUS_RADIUS,
+            collected:false,
+            kind: Math.floor(Math.random() * bonusImgs.length) // 0,1,2
+          });
+        }
+      }
+    }
+
+    // ---- INPUT / FLAP ----
+    function flap(){
+      if(gameOverState){
+        const now = performance.now();
+        if(now - gameOverAt < 1500) return;
+        gameOverState = false;
+        resetCore();
+        addPipe();
+        running = true;
+        if(hintBar) hintBar.textContent = "";
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+
+      if(waiting){
+        startLoopFromFirstFlap();
+        return;
+      }
+      if(!running) return;
+      birdVy = FLAP_VY;
+    }
+
+    function updateHUD(){ hudBar.textContent = `Score ${score}`; }
+
+    // ---- MAIN LOOP ----
+    function loop(ts){
+      if(!running) return;
+      if(!last) last = ts;
+      const dt = Math.min(33, ts - last);
+      last = ts;
+      const dtSec = dt / 1000;
+      timeSec += dtSec;
+
+      updateStars(dtSec);
+
+      birdVy += GRAVITY * dtSec;
+      if(birdVy > MAX_VY) birdVy = MAX_VY;
+      birdY  += birdVy * dtSec;
+
+      spawnT += dt;
+      if(spawnT >= PIPE_SPAWN_MS){
+        spawnT = 0;
+        addPipe();
+      }
+      speed += SPEED_INC * dtSec * 1000;
+
+      for(const p of pipes){
+        p.x -= speed * dtSec;
+      }
+
+      for(const b of bonuses){
+        b.x -= speed * dtSec;
+      }
+
+      while(pipes.length && pipes[0].x + PIPE_W < -40) pipes.shift();
+      bonuses = bonuses.filter(b => b.x > -60 && !b.collected);
+
+      for(const p of pipes){
+        if(!p.passed && (p.x + PIPE_W) < (BIRD_X - BIRD_R)){
+          p.passed = true;
+          score += 1;
+          updateHUD();
+        }
+      }
+
+      // world bounds
+      if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){
+        return gameOver();
+      }
+
+      // Collisions met obstakels
+      for(const p of pipes){
+        // boven: sneeuwstorm
+        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
+        // onder: ijsblok
+        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, p.bottomTop, PIPE_W, p.bottomH)) return gameOver();
+      }
+
+      // Collisions met cadeautjes (bonus)
+      for(const b of bonuses){
+        if(b.collected) continue;
+        const dx = BIRD_X - b.x;
+        const dy = birdY - b.y;
+        const rr = (BIRD_R + b.r) * (BIRD_R + b.r);
+        if(dx*dx + dy*dy <= rr){
+          b.collected = true;
+          score += BONUS_SCORE;
+          updateHUD();
+
+          if(hintBar){
+            // random kerst-tekst
+            const msg = BONUS_MESSAGES[Math.floor(Math.random() * BONUS_MESSAGES.length)];
+            hintBar.textContent = msg;
+            if(bonusHintTimeout){
+              clearTimeout(bonusHintTimeout);
+            }
+            bonusHintTimeout = setTimeout(()=>{
+              if(hintBar){
+                hintBar.textContent = "";
+              }
+            }, 1000);
+          }
+        }
+      }
+
+      draw();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function circleRect(cx,cy,cr, rx,ry,rw,rh){
+      const nx = Math.max(rx, Math.min(cx, rx + rw));
+      const ny = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - nx, dy = cy - ny;
+      return (dx*dx + dy*dy) <= cr*cr;
+    }
+
+    // ---- DRAW ----
+    function drawBG(){
+      if(bgReady){
+        ctx.drawImage(bgImg, 0, 0, W, H);
+      }else{
+        const bg = ctx.createLinearGradient(0,0,0,H);
+        bg.addColorStop(0, "#120a08");
+        bg.addColorStop(1, "#1b1010");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0,0,W,H);
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
+      drawStars();
+
+      for(const p of pipes){
+        // bovenste sneeuwstorm
+        drawTopPipe(p.x, 0, PIPE_W, p.top);
+        // onderste ijsblokken
+        drawBottomIceBlock(p.x, p.bottomTop, PIPE_W, p.bottomH);
+      }
+
+      // Cadeautjes tekenen
+      for(const b of bonuses){
+        if(b.collected) continue;
+        drawBonus(b.x, b.y, b.r, b.kind);
+      }
+
+      drawBird(BIRD_X, birdY, BIRD_R);
+      drawFrame();
+    }
+
+    function drawIdleFrame(offsetY){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
+      drawStars();
+      drawBird(BIRD_X, H / 2 + (offsetY || 0), BIRD_R);
+      drawFrame();
+    }
+
+    function drawFrame(){
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,216,107,.7)";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "rgba(255,216,107,.9)";
+      ctx.shadowBlur = 12;
+      ctx.strokeRect(1,1,W-2,H-2);
+      ctx.restore();
+    }
+
+    function drawTopPipe(x,y,w,h){
+      ctx.save();
+      if(obstacleUpReady){
+        ctx.drawImage(obstacleUpImg, x, y, w, h);
+      }else{
+        const g = ctx.createLinearGradient(x,y,x,y+h);
+        g.addColorStop(0,"rgba(230,245,255,0.98)");
+        g.addColorStop(1,"rgba(180,210,255,0.98)");
+        ctx.fillStyle = g;
+        ctx.fillRect(x,y,w,h);
+      }
+      ctx.restore();
+    }
+
+    // simpele blauwe ijsblokken
+    function drawBottomIceBlock(x,y,w,h){
+      ctx.save();
+
+      // body
+      const g = ctx.createLinearGradient(x, y, x, y+h);
+      g.addColorStop(0, "rgba(210,240,255,0.98)");
+      g.addColorStop(0.5, "rgba(130,190,245,0.98)");
+      g.addColorStop(1, "rgba(40,90,160,0.98)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x, y, w, h);
+
+      // glansstrepen
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.fillRect(x + 4, y + 6, 4, h - 12);
+      ctx.fillRect(x + w - 8, y + 10, 3, h - 20);
+
+      // rand
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 1.3;
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+
+      ctx.restore();
+    }
+
+    function drawBonus(x,y,r,kind){
+      ctx.save();
+      const size = r*2;
+      const img = bonusImgs[kind] || null;
+      if(img && img.complete){
+        ctx.drawImage(img, x - size/2, y - size/2, size, size);
+      }else{
+        const g = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2,x,y,r);
+        g.addColorStop(0,"#fff7da");
+        g.addColorStop(1,"#ff4f4f");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x,y,r,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawBird(x,y,r){
+      ctx.save();
+      ctx.shadowColor = "rgba(255,216,107,.9)";
+      ctx.shadowBlur = 18;
+
+      if(birdReady){
+        const size = r * 10.0;
+        ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
+      }else{
+        const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
+        g.addColorStop(0,"#fff7da");
+        g.addColorStop(1,"#ffd86b");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = "rgba(255,216,107,.8)";
+        ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
+      }
+
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    function drawGameOverFrame(){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
+      drawStars();
+
+      // GEEN obstakels meer tekenen op game over
+
+      const cx = W / 2;
+      const cy = H / 2 - 30;
+
+      // grote vogel bij game over (kerstplaatje in het midden)
+      if(birdReady){
+        ctx.save();
+        ctx.shadowColor = "rgba(255,216,107,.9)";
+        ctx.shadowBlur = 32;
+        const size = BIRD_R * 12.0; // extra groot
+        ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
+        ctx.restore();
+      }else{
+        drawBird(cx, cy, BIRD_R * 3);
+      }
+
+      ctx.save();
+      ctx.textAlign = "center";
+
+      // Hoofdtekst: Merry Christmas
+      ctx.fillStyle = "#fff7dd";
+      ctx.font = "bold 26px 'Orbitron', sans-serif";
+      ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
+
+      // Subtiel: from CBS Coin (klikbaar via canvas-click handler)
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#e3d6b0";
+      ctx.fillText("from CBS Coin", cx, cy + 92);
+
+      // Score
+      ctx.font = "bold 18px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#fff7dd";
+      ctx.fillText(`Score: ${score} points`, cx, cy + 122);
+
+      // Hint om opnieuw te spelen
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#e3d6b0";
+      ctx.fillText("Tap / Space to fly again", cx, cy + 146);
+
+      ctx.restore();
+
+      drawFrame();
+    }
+
+    // ---- GAME STATE ----
+    function stopGame(){
+      running = false;
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    function gameOver(){
+      running = false;
+      gameOverState = true;
+      gameOverAt = performance.now();
+      if(hintBar) hintBar.textContent = "";
+      if (bonusHintTimeout) {
+        clearTimeout(bonusHintTimeout);
+        bonusHintTimeout = null;
+      }
+      drawGameOverFrame();
+      showShare(score);
+    }
+
+    function enterPlay(){
+      if(playStage && canvas && canvas.parentElement !== playStage){
+        playStage.appendChild(canvas);
+      }
+      document.body.classList.add('play-mode');
+      playOverlay.setAttribute('aria-hidden','false');
+      updateHUD();
+      hideShare();
+    }
+
+    function exitPlay(){
+      stopGame();
+      waiting = false;
+      if(idleRaf){ cancelAnimationFrame(idleRaf); idleRaf = null; }
+      if(canvasHome && canvas && canvas.parentElement !== canvasHome){
+        canvasHome.appendChild(canvas);
+      }
+      document.body.classList.remove('play-mode');
+      playOverlay.setAttribute('aria-hidden','true');
+      hideShare();
+
+      if (bonusHintTimeout) {
+        clearTimeout(bonusHintTimeout);
+        bonusHintTimeout = null;
+      }
+      if(hintBar) hintBar.textContent = "";
+
+      // muziek uit en resetten bij exit
+      if (music) {
+        music.pause();
+        music.currentTime = 0;
+      }
+    }
+
+    // Klik handler voor canvas:
+    // - tijdens game: flap
+    // - bij game over: klik op "from CBS Coin" opent cbs-coin.com
+    function handleCanvasClick(e){
+      if(!document.body.classList.contains('play-mode')) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      if(gameOverState){
+        const cx = W / 2;
+        const cy = H / 2 - 30;
+        const tx = cx;
+        const ty = cy + 92;
+
+        const rw = 220;
+        const rh = 28;
+
+        if(
+          x > tx - rw/2 && x < tx + rw/2 &&
+          y > ty - rh/2 && y < ty + rh/2
+        ){
+          window.open("https://cbs-coin.com", "_blank");
+          return;
+        }
+      }
+
+      doFlap();
+    }
+
+    function doFlap(){ flap(); startMusic(); }
+
+    btnFlap.addEventListener('click', (e)=>{ e.preventDefault(); doFlap(); }, {passive:false});
+
+    canvas.addEventListener('pointerup', (e)=>{ 
+      if(document.body.classList.contains('play-mode')) handleCanvasClick(e); 
+    }, {passive:true});
+
+    window.addEventListener('keydown', (e)=>{
+      if(!document.body.classList.contains('play-mode')) return;
+      if(e.key === ' '){
+        e.preventDefault(); doFlap();
+      }else if(e.key === 'Escape'){
+        e.preventDefault(); exitPlay();
+      }
+    });
+
+    startBtn.addEventListener('click', ()=>{
+      enterPlay();
+      prepareGame();
+      startMusic();
+    });
+    exitBtn.addEventListener('click', ()=> exitPlay());
+
+    (function init(){ prepareGame(); })();
+  </script>
+
+  <!-- Mobiele 100vh fix -->
+  <script>
+    function setDocVH(){
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    setDocVH();
+    window.addEventListener('resize', setDocVH);
+    window.addEventListener('orientationchange', setDocVH);
   </script>
 </body>
 </html>
