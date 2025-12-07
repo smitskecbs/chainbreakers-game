@@ -215,6 +215,106 @@
       transform:translateY(-1px);
       box-shadow:0 0 18px var(--gold-glow);
     }
+
+    /* ------ LEADERBOARD STYLES ------ */
+    #leaderboardPanel h3{
+      margin-top:0;
+      margin-bottom:8px;
+      font-size:1rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--gold-main);
+    }
+    #leaderboardCurrent{
+      font-size:0.8rem;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .leaderboard-list{
+      border-radius:12px;
+      border:1px solid rgba(255,216,107,.18);
+      background:radial-gradient(circle at top,rgba(255,248,212,.02),rgba(0,0,0,.7));
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+    .leaderboard-row{
+      display:flex;
+      align-items:center;
+      padding:6px 10px;
+      font-size:0.8rem;
+    }
+    .leaderboard-row:nth-child(odd){
+      background:rgba(0,0,0,.18);
+    }
+    .leaderboard-pos{
+      width:24px;
+      font-family:"Orbitron",monospace;
+      font-size:0.7rem;
+      color:var(--gold-main);
+      opacity:.9;
+    }
+    .leaderboard-name{
+      flex:1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .leaderboard-score{
+      font-family:"Orbitron",monospace;
+      font-size:0.8rem;
+    }
+    .leaderboard-empty{
+      padding:8px 10px;
+      font-size:0.8rem;
+      color:var(--muted);
+      text-align:center;
+    }
+    .leaderboard-error{
+      padding:6px 10px;
+      font-size:0.75rem;
+      color:#ffb6b6;
+      background:rgba(100,0,0,.65);
+      border-radius:8px;
+      border:1px solid rgba(255,120,120,.7);
+      margin-bottom:6px;
+      display:none;
+    }
+    .leaderboard-form{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:4px;
+    }
+    .leaderboard-form input{
+      flex:1;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,216,107,.35);
+      background:rgba(3,5,10,.9);
+      color:var(--fg);
+      font-size:0.8rem;
+      min-width:0;
+    }
+    .leaderboard-form button{
+      border-radius:999px;
+      border:none;
+      padding:8px 14px;
+      font-size:0.75rem;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      font-weight:700;
+      background:linear-gradient(135deg,var(--btnA),var(--btnB));
+      color:#3a2600;
+      box-shadow:0 0 12px rgba(255,216,107,.7);
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .leaderboard-note{
+      font-size:0.7rem;
+      color:var(--muted);
+      margin-top:4px;
+    }
   </style>
 </head>
 <body>
@@ -273,13 +373,38 @@
         </p>
       </div>
     </div>
+
+    <!-- GLOBAL LEADERBOARD PANEL -->
+    <div id="leaderboardPanel" class="panel" style="max-width:880px;">
+      <h3>Global Top 10 – Xmas Scores</h3>
+      <div id="leaderboardCurrent">
+        Current score this session: <span id="leaderboardCurrentScore">0</span>
+      </div>
+      <div id="leaderboardError" class="leaderboard-error"></div>
+      <div id="leaderboardList" class="leaderboard-list">
+        <div class="leaderboard-empty">Loading scores…</div>
+      </div>
+      <form id="leaderboardForm" class="leaderboard-form">
+        <input
+          id="leaderboardName"
+          type="text"
+          maxlength="20"
+          placeholder="Naam / nickname (geen wallet nodig)"
+          required
+        />
+        <button type="submit">Save score</button>
+      </form>
+      <div class="leaderboard-note">
+        Scoreboard is global via Supabase – iedereen ziet dezelfde top 10. Alleen namen/nicknames, geen wallet adressen.
+      </div>
+    </div>
   </main>
 
   <!-- Fullscreen Play -->
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
     <div class="stage">
       <div class="hudbar" id="hudBar">Score 0</div>
-      <div class="hintbar" id="hintBar">Tap / Space to start</div>
+      <div class="hintBar" id="hintBar">Tap / Space to start</div>
 
       <!-- Mute knop in speelveld -->
       <button
@@ -469,6 +594,8 @@
     let pipes = [];
     let bonuses = [];
     let score = 0;
+    window.currentGameScore = 0; // <-- exposed voor Supabase leaderboard
+
     let running = false, rafId = null;
     let last = 0, spawnT = 0, speed = SPEED_START;
     let timeSec = 0;
@@ -559,6 +686,7 @@
       pipes = [];
       bonuses = [];
       score = 0;
+      window.currentGameScore = 0;
       speed = SPEED_START;
       last = 0;
       spawnT = 0;
@@ -672,7 +800,12 @@
       birdVy = FLAP_VY;
     }
 
-    function updateHUD(){ hudBar.textContent = `Score ${score}`; }
+    function updateHUD(){
+      hudBar.textContent = `Score ${score}`;
+      window.currentGameScore = score; // <-- sync met Supabase leader
+      const curEl = document.getElementById('leaderboardCurrentScore');
+      if (curEl) curEl.textContent = score;
+    }
 
     // ---- MAIN LOOP ----
     function loop(ts){
@@ -906,8 +1039,6 @@
       drawBG();
       drawStars();
 
-      // GEEN obstakels meer tekenen op game over
-
       const cx = W / 2;
       const cy = H / 2 - 30;
 
@@ -1065,6 +1196,103 @@
     (function init(){ prepareGame(); })();
   </script>
 
+  <!-- Supabase client + leaderboard script -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
+    const SUPABASE_ANON_KEY = "PLAATS_HIER_JOUW_ANON_KEY"; // <-- hier jouw anon public key tussen de quotes
+    const TABLE_NAME = "leaderboard";
+
+    const lbListEl = document.getElementById("leaderboardList");
+    const lbErrorEl = document.getElementById("leaderboardError");
+    const lbFormEl = document.getElementById("leaderboardForm");
+    const lbNameEl = document.getElementById("leaderboardName");
+    const lbCurrentScoreEl = document.getElementById("leaderboardCurrentScore");
+
+    const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function showLbError(msg){
+      if(!lbErrorEl) return;
+      lbErrorEl.textContent = msg;
+      lbErrorEl.style.display = "block";
+    }
+    function clearLbError(){
+      if(!lbErrorEl) return;
+      lbErrorEl.textContent = "";
+      lbErrorEl.style.display = "none";
+    }
+
+    async function loadLeaderboard(){
+      clearLbError();
+      if(lbListEl){
+        lbListEl.innerHTML = '<div class="leaderboard-empty">Loading scores…</div>';
+      }
+
+      const { data, error } = await supa
+        .from(TABLE_NAME)
+        .select("name, score")
+        .order("score", { ascending: false })
+        .limit(10);
+
+      if(error){
+        console.error(error);
+        showLbError("Kon scoreboard niet laden. Probeer later opnieuw.");
+        return;
+      }
+
+      if(!lbListEl) return;
+      lbListEl.innerHTML = "";
+
+      if(!data || !data.length){
+        lbListEl.innerHTML = '<div class="leaderboard-empty">Nog geen scores. Wees de eerste die een high score zet 🎄</div>';
+        return;
+      }
+
+      data.forEach((row, index) => {
+        const rowEl = document.createElement("div");
+        rowEl.className = "leaderboard-row";
+        rowEl.innerHTML = `
+          <div class="leaderboard-pos">${String(index+1).padStart(2,"0")}</div>
+          <div class="leaderboard-name">${row.name}</div>
+          <div class="leaderboard-score">${row.score}</div>
+        `;
+        lbListEl.appendChild(rowEl);
+      });
+    }
+
+    lbFormEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearLbError();
+
+      const name = lbNameEl.value.trim();
+      const sc = typeof window.currentGameScore === "number" ? window.currentGameScore : 0;
+
+      if(!name){
+        return;
+      }
+      if(sc <= 0){
+        showLbError("Speel eerst een ronde om een score te krijgen 🙂");
+        return;
+      }
+
+      const { error } = await supa
+        .from(TABLE_NAME)
+        .insert({ name, score: sc });
+
+      if(error){
+        console.error(error);
+        showLbError("Kon score niet opslaan. Probeer later opnieuw.");
+        return;
+      }
+
+      lbNameEl.value = "";
+      await loadLeaderboard();
+    });
+
+    // laad leaderboard bij pageload
+    loadLeaderboard();
+  </script>
+
   <!-- Mobiele 100vh fix -->
   <script>
     function setDocVH(){
@@ -1077,3 +1305,4 @@
   </script>
 </body>
 </html>
+
