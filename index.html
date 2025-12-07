@@ -338,7 +338,7 @@
       </p>
     </div>
 
-    <!-- GEEN STARTKNOP MEER, ALLEEN GAMEPANEEL -->
+    <!-- GAMEPANEEL – canvas is startknop -->
     <div id="gamePanel" class="panel">
       <div class="card">
         <div id="canvasHome" style="display:grid;place-items:center;cursor:pointer;">
@@ -972,6 +972,51 @@
       ctx.restore();
     }
 
+    // --- KERSTKAART GAME OVER ---
+    function drawGameOverFrame(){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
+      drawStars();
+
+      const cx = W / 2;
+      const cy = H / 2 - 30;
+
+      // grote kerstman / slee
+      if(birdReady){
+        ctx.save();
+        ctx.shadowColor = "rgba(255,216,107,.9)";
+        ctx.shadowBlur = 32;
+        const size = BIRD_R * 12.0;
+        ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
+        ctx.restore();
+      }else{
+        drawBird(cx, cy, BIRD_R * 3);
+      }
+
+      ctx.save();
+      ctx.textAlign = "center";
+
+      ctx.fillStyle = "#fff7dd";
+      ctx.font = "bold 26px 'Orbitron', sans-serif";
+      ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
+
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#e3d6b0";
+      ctx.fillText("from CBS Coin", cx, cy + 92);
+
+      ctx.font = "bold 18px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#fff7dd";
+      ctx.fillText("Score: " + score + " points", cx, cy + 122);
+
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#e3d6b0";
+      ctx.fillText("Scoreboard & share below the game", cx, cy + 146);
+
+      ctx.restore();
+
+      drawFrame();
+    }
+
     function stopGame(){
       running = false;
       if(rafId) cancelAnimationFrame(rafId);
@@ -984,7 +1029,7 @@
       gameOverState = true;
       gameOverAt = performance.now();
 
-      if(hintBar) hintBar.textContent = "Game over! Saving your score…";
+      if(hintBar) hintBar.textContent = "";
       if (bonusHintTimeout) {
         clearTimeout(bonusHintTimeout);
         bonusHintTimeout = null;
@@ -992,7 +1037,10 @@
 
       window.currentGameScore = score;
 
-      // 5 seconden wachten voordat we uit fullscreen gaan en naar scoreboard + share
+      // kerstkaart tekenen in fullscreen
+      drawGameOverFrame();
+
+      // 5 seconden wachten, dan uit fullscreen + share + leaderboard
       setTimeout(() => {
         if (!gameOverState) return;
         exitPlay();
@@ -1034,6 +1082,8 @@
         music.pause();
         music.currentTime = 0;
       }
+
+      gameOverState = false;
     }
 
     function handleCanvasClick(e){
@@ -1042,7 +1092,7 @@
         enterPlay();
         prepareGame();
         startMusic();
-        doFlap(); // direct eerste flap / start
+        doFlap(); // eerste flap meteen
         return;
       }
 
