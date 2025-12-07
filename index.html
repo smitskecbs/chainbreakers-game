@@ -215,6 +215,33 @@
       transform:translateY(-1px);
       box-shadow:0 0 18px var(--gold-glow);
     }
+
+    /* LEADERBOARD STYLES */
+    .leaderboard-list{
+      list-style:none;
+      padding-left:0;
+      margin:8px 0 0;
+    }
+    .leaderboard-list li{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:4px 0;
+      border-bottom:1px dashed rgba(255,216,107,.15);
+      font-size:0.9rem;
+    }
+    .leaderboard-rank{
+      font-weight:700;
+      color:var(--gold-main);
+      margin-right:8px;
+    }
+    .leaderboard-score{
+      font-weight:700;
+    }
+    .leaderboard-name{
+      margin-left:8px;
+      opacity:.9;
+    }
   </style>
 </head>
 <body>
@@ -273,6 +300,18 @@
         </p>
       </div>
     </div>
+
+    <!-- GLOBAL LEADERBOARD -->
+    <div id="leaderboardPanel" class="panel" style="max-width:520px; display:none;">
+      <h3>Global Top 10</h3>
+      <ol id="leaderboardList" class="leaderboard-list"></ol>
+      <p class="muted" style="font-size:0.75rem;margin-top:6px;">
+        This leaderboard is shared between all players worldwide. Drop your best score and tag
+        <a href="https://x.com/CBS_Coin" target="_blank" style="color:var(--gold-main);text-decoration:none;">
+          @CBS_Coin
+        </a> on X 🚀
+      </p>
+    </div>
   </main>
 
   <!-- Fullscreen Play -->
@@ -328,6 +367,9 @@
 
   <!-- Flappy Game JS -->
   <script>
+    // <<< HIER STAAT JE REPLIT BACKEND URL >>>
+    const API_BASE = "https://xmas-leaderboard.smitskecbs.repl.co";
+
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
     const hudBar = document.getElementById('hudBar');
@@ -350,7 +392,24 @@
     const muteBtnOverlay = document.getElementById('muteBtnOverlay');
     let isMuted = false;
 
-    // timeout-handle voor kerst-tekst bij bonus
+    // LEADERBOARD DOM
+    const leaderboardPanel = document.getElementById('leaderboardPanel');
+    const leaderboardList  = document.getElementById('leaderboardList');
+
+    // Naam speler in localStorage
+    let playerName = localStorage.getItem("cbs_xmas_player_name") || null;
+    function askPlayerNameIfNeeded() {
+      if (playerName && playerName.trim() !== "") return playerName;
+      const input = prompt("Enter a name for the global leaderboard (max 16 chars):", playerName || "");
+      if (!input) {
+        playerName = "Anonymous";
+      } else {
+        playerName = input.trim().slice(0, 16);
+      }
+      localStorage.setItem("cbs_xmas_player_name", playerName);
+      return playerName;
+    }
+
     let bonusHintTimeout = null;
 
     function updateMuteUI(){
@@ -384,7 +443,6 @@
       }
     }
 
-    // Muziek pauze/stop buiten de site
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && music) {
         music.pause();
@@ -400,21 +458,20 @@
 
     // Sprites
     const birdImg = new Image();
-    birdImg.src = "bird.png"; // kerstman met slee
+    birdImg.src = "bird.png";
     let birdReady = false;
     birdImg.onload = () => { birdReady = true; };
 
     const bgImg = new Image();
-    bgImg.src = "background.png"; // kerstlandschap
+    bgImg.src = "background.png";
     let bgReady = false;
     bgImg.onload = () => { bgReady = true; };
 
     const obstacleUpImg = new Image();
-    obstacleUpImg.src = "obstacle-up.gif"; // sneeuwstorm boven
+    obstacleUpImg.src = "obstacle-up.gif";
     let obstacleUpReady = false;
     obstacleUpImg.onload = () => { obstacleUpReady = true; };
 
-    // Bonus sprites: present, candy cane, gingerbread
     const bonusSpriteSources = ["bonus.png", "bonus1.png", "bonus2.png"];
     const bonusImgs = bonusSpriteSources.map(src => {
       const img = new Image();
@@ -424,15 +481,12 @@
 
     const W = canvas.width, H = canvas.height;
 
-    // Obstakel maten
-    const PIPE_W = 64;                // breedte van pijp / sneeuwstorm
-    const BOTTOM_MIN_H = 110;         // minimale hoogte ijsblok
-    const BOTTOM_MAX_H = 210;         // maximale hoogte ijsblok
+    const PIPE_W = 64;
+    const BOTTOM_MIN_H = 110;
+    const BOTTOM_MAX_H = 210;
+    const GAP_MIN = 140;
+    const GAP_MAX = 230;
 
-    const GAP_MIN = 140;              // minimum opening
-    const GAP_MAX = 230;              // maximum opening
-
-    // Physics
     const BIRD_X = Math.floor(W * 0.28), BIRD_R = 12;
     const GRAVITY = 1400;
     const FLAP_VY = -420;
@@ -442,12 +496,10 @@
     const SPEED_START = 130;
     const SPEED_INC   = 0.010;
 
-    // Bonus settings
     const BONUS_RADIUS = 18;
     const BONUS_SCORE  = 5;
-    const BONUS_CHANCE = 0.45; // kans per pijp
+    const BONUS_CHANCE = 0.45;
 
-    // Teksten voor bij bonus
     const BONUS_MESSAGES = [
       "Ho Ho Ho! 🎅",
       "Merry Christmas! 🎄",
@@ -456,7 +508,6 @@
       "Santa approves! 🛷"
     ];
 
-    // Vallende sterren
     const STAR_SPAWN_RATE = 1.2;
     const STAR_MIN_SPEED  = 140;
     const STAR_MAX_SPEED  = 240;
@@ -476,7 +527,7 @@
     let gameOverState = false;
     let gameOverAt = 0;
 
-    // ----- SHARE HELPERS -----
+    // SHARE
     function updateShareLinks(sc){
       const url  = encodeURIComponent(window.location.href);
       const text = encodeURIComponent(
@@ -504,7 +555,68 @@
       if(shareBar) shareBar.style.display = "none";
     }
 
-    // ---- STARS ----
+    // GLOBAL LEADERBOARD API
+    async function loadAndRenderLeaderboard() {
+      if (!leaderboardPanel || !leaderboardList) return;
+      try {
+        const res = await fetch(API_BASE + "/top10");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const list = await res.json();
+        renderLeaderboard(list);
+      } catch (e) {
+        console.warn("Failed to load leaderboard:", e);
+        leaderboardPanel.style.display = "none";
+      }
+    }
+
+    function renderLeaderboard(list) {
+      leaderboardList.innerHTML = "";
+      if (!Array.isArray(list) || list.length === 0) {
+        leaderboardPanel.style.display = "none";
+        return;
+      }
+      leaderboardPanel.style.display = "block";
+
+      list.forEach((entry, idx) => {
+        const li = document.createElement("li");
+
+        const left = document.createElement("div");
+        const rankSpan = document.createElement("span");
+        rankSpan.className = "leaderboard-rank";
+        rankSpan.textContent = `#${idx+1}`;
+        left.appendChild(rankSpan);
+
+        const scoreSpan = document.createElement("span");
+        scoreSpan.className = "leaderboard-score";
+        scoreSpan.textContent = `${entry.score} pts`;
+        left.appendChild(scoreSpan);
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "leaderboard-name";
+        nameSpan.textContent = entry.name || "Anonymous";
+        left.appendChild(nameSpan);
+
+        li.appendChild(left);
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    async function submitScoreGlobal(sc) {
+      try {
+        if (!API_BASE) return;
+        const name = askPlayerNameIfNeeded();
+        await fetch(API_BASE + "/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, score: sc })
+        });
+        loadAndRenderLeaderboard();
+      } catch (e) {
+        console.warn("Failed to submit score:", e);
+      }
+    }
+
+    // STARS
     function spawnStar(){
       const x = Math.random() * W;
       const y = -20 - Math.random() * 60;
@@ -552,7 +664,7 @@
       ctx.restore();
     }
 
-    // ---- CORE RESET ----
+    // CORE RESET
     function resetCore(){
       birdY = H / 2;
       birdVy = 0;
@@ -607,13 +719,11 @@
       rafId = requestAnimationFrame(loop);
     }
 
-    // ---- PIPE / BONUS SPAWN ----
+    // PIPE / BONUS SPAWN
     function addPipe(){
-      // Random hoogte onder
       const bottomH = BOTTOM_MIN_H + Math.random() * (BOTTOM_MAX_H - BOTTOM_MIN_H);
       const bottomTop = H - bottomH;
 
-      // Random gap hoogte
       const gap = GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
       let top = bottomTop - gap;
 
@@ -631,7 +741,6 @@
       };
       pipes.push(p);
 
-      // Kans op cadeautje in de gap
       if(Math.random() < BONUS_CHANCE){
         const gapTop = top + 20;
         const gapBottom = bottomTop - 20;
@@ -644,13 +753,13 @@
             y: by,
             r: BONUS_RADIUS,
             collected:false,
-            kind: Math.floor(Math.random() * bonusImgs.length) // 0,1,2
+            kind: Math.floor(Math.random() * bonusImgs.length)
           });
         }
       }
     }
 
-    // ---- INPUT / FLAP ----
+    // INPUT / FLAP
     function flap(){
       if(gameOverState){
         const now = performance.now();
@@ -674,7 +783,7 @@
 
     function updateHUD(){ hudBar.textContent = `Score ${score}`; }
 
-    // ---- MAIN LOOP ----
+    // MAIN LOOP
     function loop(ts){
       if(!running) return;
       if(!last) last = ts;
@@ -715,20 +824,15 @@
         }
       }
 
-      // world bounds
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){
         return gameOver();
       }
 
-      // Collisions met obstakels
       for(const p of pipes){
-        // boven: sneeuwstorm
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
-        // onder: ijsblok
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, p.bottomTop, PIPE_W, p.bottomH)) return gameOver();
       }
 
-      // Collisions met cadeautjes (bonus)
       for(const b of bonuses){
         if(b.collected) continue;
         const dx = BIRD_X - b.x;
@@ -740,7 +844,6 @@
           updateHUD();
 
           if(hintBar){
-            // random kerst-tekst
             const msg = BONUS_MESSAGES[Math.floor(Math.random() * BONUS_MESSAGES.length)];
             hintBar.textContent = msg;
             if(bonusHintTimeout){
@@ -766,7 +869,7 @@
       return (dx*dx + dy*dy) <= cr*cr;
     }
 
-    // ---- DRAW ----
+    // DRAW
     function drawBG(){
       if(bgReady){
         ctx.drawImage(bgImg, 0, 0, W, H);
@@ -785,13 +888,10 @@
       drawStars();
 
       for(const p of pipes){
-        // bovenste sneeuwstorm
         drawTopPipe(p.x, 0, PIPE_W, p.top);
-        // onderste ijsblokken
         drawBottomIceBlock(p.x, p.bottomTop, PIPE_W, p.bottomH);
       }
 
-      // Cadeautjes tekenen
       for(const b of bonuses){
         if(b.collected) continue;
         drawBonus(b.x, b.y, b.r, b.kind);
@@ -833,11 +933,8 @@
       ctx.restore();
     }
 
-    // simpele blauwe ijsblokken
     function drawBottomIceBlock(x,y,w,h){
       ctx.save();
-
-      // body
       const g = ctx.createLinearGradient(x, y, x, y+h);
       g.addColorStop(0, "rgba(210,240,255,0.98)");
       g.addColorStop(0.5, "rgba(130,190,245,0.98)");
@@ -845,18 +942,15 @@
       ctx.fillStyle = g;
       ctx.fillRect(x, y, w, h);
 
-      // glansstrepen
       ctx.globalAlpha = 0.35;
       ctx.fillStyle = "rgba(255,255,255,0.95)";
       ctx.fillRect(x + 4, y + 6, 4, h - 12);
       ctx.fillRect(x + w - 8, y + 10, 3, h - 20);
 
-      // rand
       ctx.globalAlpha = 1;
       ctx.strokeStyle = "rgba(255,255,255,0.8)";
       ctx.lineWidth = 1.3;
       ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-
       ctx.restore();
     }
 
@@ -906,17 +1000,14 @@
       drawBG();
       drawStars();
 
-      // GEEN obstakels meer tekenen op game over
-
       const cx = W / 2;
       const cy = H / 2 - 30;
 
-      // grote vogel bij game over (kerstplaatje in het midden)
       if(birdReady){
         ctx.save();
         ctx.shadowColor = "rgba(255,216,107,.9)";
         ctx.shadowBlur = 32;
-        const size = BIRD_R * 12.0; // extra groot
+        const size = BIRD_R * 12.0;
         ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
         ctx.restore();
       }else{
@@ -926,22 +1017,18 @@
       ctx.save();
       ctx.textAlign = "center";
 
-      // Hoofdtekst: Merry Christmas
       ctx.fillStyle = "#fff7dd";
       ctx.font = "bold 26px 'Orbitron', sans-serif";
       ctx.fillText("MERRY CHRISTMAS", cx, cy + 70);
 
-      // Subtiel: from CBS Coin (klikbaar via canvas-click handler)
       ctx.font = "14px 'Orbitron', sans-serif";
       ctx.fillStyle = "#e3d6b0";
       ctx.fillText("from CBS Coin", cx, cy + 92);
 
-      // Score
       ctx.font = "bold 18px 'Orbitron', sans-serif";
       ctx.fillStyle = "#fff7dd";
       ctx.fillText(`Score: ${score} points`, cx, cy + 122);
 
-      // Hint om opnieuw te spelen
       ctx.font = "14px 'Orbitron', sans-serif";
       ctx.fillStyle = "#e3d6b0";
       ctx.fillText("Tap / Space to fly again", cx, cy + 146);
@@ -951,7 +1038,6 @@
       drawFrame();
     }
 
-    // ---- GAME STATE ----
     function stopGame(){
       running = false;
       if(rafId) cancelAnimationFrame(rafId);
@@ -969,6 +1055,7 @@
       }
       drawGameOverFrame();
       showShare(score);
+      submitScoreGlobal(score); // ⬅ score naar globale leaderboard
     }
 
     function enterPlay(){
@@ -998,16 +1085,12 @@
       }
       if(hintBar) hintBar.textContent = "";
 
-      // muziek uit en resetten bij exit
       if (music) {
         music.pause();
         music.currentTime = 0;
       }
     }
 
-    // Klik handler voor canvas:
-    // - tijdens game: flap
-    // - bij game over: klik op "from CBS Coin" opent cbs-coin.com
     function handleCanvasClick(e){
       if(!document.body.classList.contains('play-mode')) return;
 
@@ -1062,7 +1145,10 @@
     });
     exitBtn.addEventListener('click', ()=> exitPlay());
 
-    (function init(){ prepareGame(); })();
+    (function init(){
+      prepareGame();
+      loadAndRenderLeaderboard();
+    })();
   </script>
 
   <!-- Mobiele 100vh fix -->
