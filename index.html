@@ -116,9 +116,6 @@
 
     .muted{color:var(--muted)}
 
-    .play-overlay}{
-      position:fixed; inset:0; z-index:50; display:none;
-    }
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
@@ -496,7 +493,7 @@
             Your score: <span id="gameOverScore">0</span> points
           </p>
           <p class="gameover-countdown" id="gameOverCountdown">
-            Saving your score… returning to the leaderboard in 5 seconds.
+            Saving your score… returning to the leaderboard in 3 seconds.
           </p>
           <p class="gameover-countdown" style="margin-top:8px;">
             After that you can enter your name or nickname and see the global top 10.
@@ -1104,10 +1101,10 @@
 
       window.currentGameScore = score;
 
-      // kerstkaart + aftel
+      // kerstkaart + kortere aftel (3 sec) + auto score opslaan indien ingelogd
       if(gameOverCard && gameOverScoreEl && gameOverCountdownEl){
         gameOverScoreEl.textContent = score;
-        let remaining = 5;
+        let remaining = 3;
         gameOverCountdownEl.textContent =
           "Saving your score… returning to the leaderboard in " + remaining + " seconds.";
         gameOverCard.style.display = "flex";
@@ -1120,7 +1117,13 @@
           if(remaining <= 0){
             clearInterval(gameOverCountdownTimer);
             gameOverCountdownTimer = null;
-            // terug naar pagina + leaderboard
+
+            // automatisch score opslaan via Supabase (als Google ingelogd)
+            if (window.handleAutoScoreFromGame) {
+              window.handleAutoScoreFromGame(score);
+            }
+
+            // terug naar pagina + leaderboard + share
             exitPlay();
             showShare(score);
             if (window.handleGameOverForLeaderboard) {
@@ -1133,6 +1136,9 @@
         }, 1000);
       } else {
         // fallback
+        if (window.handleAutoScoreFromGame) {
+          window.handleAutoScoreFromGame(score);
+        }
         exitPlay();
         showShare(score);
         if (window.handleGameOverForLeaderboard) {
@@ -1234,6 +1240,8 @@
 
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let currentUserEmail = null; // bewaren voor auto-score
+
     function showLbError(msg){
       if(!lbErrorEl) return;
       lbErrorEl.textContent = msg;
@@ -1308,7 +1316,11 @@
         return;
       }
 
-      lbNameEl.value = lbNameEl.disabled ? lbNameEl.value : "";
+      // als email automatisch is ingevuld laten we 'm staan; anders leegmaken
+      if (!currentUserEmail) {
+        lbNameEl.value = "";
+      }
+
       await loadLeaderboard();
     });
 
@@ -1334,25 +1346,28 @@
       if(!authStatusEl || !loginBtn || !logoutBtn || !lbNameEl) return;
 
       if(!session){
+        currentUserEmail = null;
         authStatusEl.textContent =
           "Not signed in – you can still use a nickname for the high score.";
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         lbNameEl.disabled = false;
         lbNameEl.placeholder = "Name / nickname (no wallet needed)";
-        if(!lbNameEl.value){
+        if(!currentUserEmail){
           lbNameEl.value = "";
         }
         return;
       }
 
       const email = (session.user && session.user.email) || "";
+      currentUserEmail = email;
+
       authStatusEl.textContent =
         "Signed in as " + email + " – your email will be used for the high score name.";
       loginBtn.style.display = "none";
       logoutBtn.style.display = "inline-block";
 
-      lbNameEl.disabled = false; // laten staan maar auto-invullen
+      lbNameEl.disabled = false; // user mag het nog aanpassen
       lbNameEl.value = email;
       lbNameEl.placeholder = "Saving as " + email;
     }
@@ -1379,6 +1394,33 @@
       await supa.auth.signOut();
       updateAuthUI(null);
     });
+
+    // AUTO SCORE OPSLAAN NA GAME-OVER (als Google ingelogd)
+    window.handleAutoScoreFromGame = async function(score){
+      try {
+        if (!currentUserEmail) return;
+        if (!score || score <= 0) return;
+
+        const name = currentUserEmail;
+        // vul input ook zodat UI klopt
+        if (lbNameEl) {
+          lbNameEl.value = name;
+        }
+
+        const { error } = await supa
+          .from(TABLE_NAME)
+          .insert({ name, score });
+
+        if (error) {
+          console.error("Auto-save score error:", error);
+          return;
+        }
+
+        await loadLeaderboard();
+      } catch (err) {
+        console.error("Auto-save score exception:", err);
+      }
+    };
 
     // Init
     (async function initSupabase(){
